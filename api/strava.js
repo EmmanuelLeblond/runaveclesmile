@@ -1,18 +1,16 @@
 export default async function handler(req, res) {
-  // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
 
   const { action, code, refresh_token } = req.query;
-  const CLIENT_ID     = process.env.STRAVA_CLIENT_ID;
+  const CLIENT_ID     = 206136;
   const CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET;
 
-  // Exchange auth code for tokens (first-time connect)
   if (action === 'exchange' && code) {
     const r = await fetch('https://www.strava.com/oauth/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        client_id: Number(CLIENT_ID),
+        client_id: 206136,
         client_secret: CLIENT_SECRET,
         code,
         grant_type: 'authorization_code'
@@ -22,14 +20,12 @@ export default async function handler(req, res) {
     return res.json(data);
   }
 
-  // Refresh token + fetch this month's activities
   if (action === 'stats' && refresh_token) {
-    // Refresh the access token
     const tokenRes = await fetch('https://www.strava.com/oauth/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        client_id: Number(CLIENT_ID),
+        client_id: 206136,
         client_secret: CLIENT_SECRET,
         refresh_token,
         grant_type: 'refresh_token'
@@ -37,7 +33,6 @@ export default async function handler(req, res) {
     });
     const { access_token, refresh_token: new_refresh } = await tokenRes.json();
 
-    // Fetch activities since start of this month
     const start = new Date();
     start.setDate(1); start.setHours(0,0,0,0);
     const after = Math.floor(start.getTime() / 1000);
@@ -48,12 +43,10 @@ export default async function handler(req, res) {
     );
     const activities = await actRes.json();
 
-    // Sum up km for runs only
     const totalKm = activities
       .filter(a => a.type === 'Run')
       .reduce((sum, a) => sum + a.distance / 1000, 0);
 
-    // Last 7 days breakdown
     const days = [0,1,2,3,4,5,6].map(i => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
