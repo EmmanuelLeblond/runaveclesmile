@@ -12,7 +12,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        client_id: CLIENT_ID,
+        client_id: Number(CLIENT_ID),
         client_secret: CLIENT_SECRET,
         code,
         grant_type: 'authorization_code'
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        client_id: CLIENT_ID,
+        client_id: Number(CLIENT_ID),
         client_secret: CLIENT_SECRET,
         refresh_token,
         grant_type: 'refresh_token'
