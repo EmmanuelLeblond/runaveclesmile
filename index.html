@@ -1145,7 +1145,7 @@
       Chasing a spot on the French National Cross Country Team — one kilometer at a time. Follow the journey.
     </p>
     <div class="hero-cta">
-      <a href="#countdown" class="btn-primary" data-en="See the Countdown" data-fr="Voir le Compte à Rebours">See the Countdown</a>
+      <a href="#mileage" class="btn-primary" data-en="See My Training" data-fr="Voir Mon Entraînement">See My Training</a>
       <a href="#races" class="btn-ghost" data-en="Race Schedule" data-fr="Calendrier des Courses">Race Schedule</a>
     </div>
   </div>
@@ -1211,9 +1211,9 @@
   <div class="mileage-layout">
     <div class="reveal">
       <h2 class="section-title" data-en="Monthly<br>Mileage" data-fr="Kilométrage<br>Mensuel">Monthly<br>Mileage</h2>
-      <p class="section-sub" data-en="Training data synced from Strava. Connect once and your monthly km updates automatically after every run." data-fr="Données synchronisées depuis Strava. Connectez une fois et votre kilométrage mensuel se met à jour automatiquement après chaque sortie.">Training data synced from Strava. Connect once and your monthly km updates automatically after every run.</p>
+      <p class="section-sub" data-en="Training data synced from Strava. Displayed in miles for English, kilometers for French — connect once and it updates automatically after every run." data-fr="Données synchronisées depuis Strava. Affichées en kilomètres — connectez une fois et ça se met à jour automatiquement après chaque sortie.">Training data synced from Strava. Displayed in miles for English, kilometers for French — connect once and it updates automatically after every run.</p>
 
-      <a class="strava-connect-btn" href="https://www.strava.com/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&response_type=code&scope=activity:read_all" id="strava-btn" target="_blank" rel="noopener">
+      <a class="strava-connect-btn" id="strava-btn" href="https://www.strava.com/oauth/authorize?client_id=206136&redirect_uri=https://run-avec-le-smile.vercel.app&response_type=code&scope=activity:read_all&approval_prompt=auto">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
         <span data-en="Connect with Strava" data-fr="Connecter avec Strava">Connect with Strava</span>
       </a>
@@ -1222,18 +1222,16 @@
         <div class="strava-dot" id="strava-dot"></div>
         <span class="strava-status-text" id="strava-status-text" data-en="Not connected — data shown is a placeholder" data-fr="Non connecté — données affichées à titre indicatif">Not connected — data shown is a placeholder</span>
       </div>
-
-      <p class="coros-note" data-en="To go live: create a free Strava API app at strava.com/settings/api, add your Client ID above, and deploy a small Vercel function to handle the OAuth token exchange. I can build that for you when you're ready." data-fr="Pour activer : créez une app Strava gratuite sur strava.com/settings/api, ajoutez votre Client ID ci-dessus, et déployez une petite fonction Vercel. Je peux vous aider quand vous êtes prêt.">To go live: create a free Strava API app at strava.com/settings/api, add your Client ID above, and deploy a small Vercel function to handle the OAuth token exchange. I can build that for you when you're ready.</p>
     </div>
     <div class="reveal reveal-delay-1">
       <!-- Monthly card -->
       <div class="mileage-card" style="margin-bottom:20px;">
         <div class="mileage-sub-label" data-en="This Month — February 2026" data-fr="Ce Mois — Février 2026">This Month — February 2026</div>
-        <div class="mileage-big" id="monthly-km">142 <span>km</span></div>
+        <div class="mileage-big" id="monthly-km">— <span id="monthly-unit">mi</span></div>
         <div class="mileage-bar-wrap">
           <div class="mileage-bar-label">
             <span data-en="Monthly target" data-fr="Objectif mensuel">Monthly target</span>
-            <span id="monthly-pct">71%</span>
+            <span id="monthly-pct">—</span>
           </div>
           <div class="bar-track">
             <div class="bar-fill" id="monthly-bar" style="width:0%"></div>
@@ -1449,6 +1447,11 @@
         el.style.opacity = '1';
       }, 120);
     });
+
+    // re-render mileage in the new unit if data is loaded
+    if (_storedKm !== null && _storedWeeklyKm !== null) {
+      setTimeout(() => renderMileage(_storedKm, _storedWeeklyKm), 150);
+    }
   }
 
   // ─── COUNTDOWN ───
@@ -1487,26 +1490,153 @@
   updateCountdown();
   setInterval(updateCountdown, 1000);
 
-  // ─── WEEKLY BARS ───
+  // ─── STRAVA INTEGRATION ───
+  const MONTHLY_TARGET_MI = 125; // miles — your monthly goal in miles (~200km)
+  const MONTHLY_TARGET_KM = 200; // km  — your monthly goal in km
+
+  // Returns current unit based on language toggle
+  function getUnit() { return isFrench ? 'km' : 'mi'; }
+
+  // Convert stored km value to display value
+  function toDisplay(km) {
+    return isFrench
+      ? Math.round(km * 10) / 10
+      : Math.round(km * 0.621371 * 10) / 10;
+  }
+
+  function getTarget() {
+    return isFrench ? MONTHLY_TARGET_KM : MONTHLY_TARGET_MI;
+  }
+
+  function setStravaConnected(name) {
+    const btn = document.getElementById('strava-btn');
+    btn.style.background = '#333';
+    btn.style.borderColor = '#444';
+    btn.style.cursor = 'default';
+    btn.href = '#';
+    btn.onclick = e => e.preventDefault();
+    document.getElementById('strava-btn-text').textContent = `✓ Connected${name ? ' as ' + name : ''}`;
+    const dot = document.getElementById('strava-dot');
+    dot.classList.add('live');
+    const txt = document.getElementById('strava-status-text');
+    txt.textContent = isFrench ? 'Données en direct depuis Strava' : 'Live data from Strava';
+    txt.classList.add('live');
+  }
+
+  // Store raw km values globally so we can re-render on language toggle
+  let _storedKm = null;
+  let _storedWeeklyKm = null;
+
+  function renderMileage(totalKm, weeklyKmDays) {
+    _storedKm = totalKm;
+    _storedWeeklyKm = weeklyKmDays;
+
+    const displayVal = toDisplay(totalKm);
+    const target     = getTarget();
+    const unit       = getUnit();
+    const pct        = Math.min(Math.round((displayVal / target) * 100), 100);
+
+    // Update number and unit
+    const kmEl = document.getElementById('monthly-km');
+    kmEl.innerHTML = `${displayVal} <span id="monthly-unit">${unit}</span>`;
+    document.getElementById('monthly-pct').textContent = pct + '%';
+    setTimeout(() => {
+      document.getElementById('monthly-bar').style.width = pct + '%';
+    }, 200);
+
+    // Weekly bars — convert each day
+    const grid = document.getElementById('weekly-grid');
+    grid.innerHTML = '';
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const displayDays = weeklyKmDays.map(k => toDisplay(k));
+    const maxVal = Math.max(...displayDays, 1);
+    const todayIdx = (new Date().getDay() + 6) % 7;
+    days.forEach((d, i) => {
+      const barPct = (displayDays[i] / maxVal) * 100;
+      grid.innerHTML += `
+        <div class="week-bar">
+          <div class="week-fill-wrap">
+            <div class="week-fill ${i === todayIdx ? 'current' : ''}"
+                 id="wb-${i}" style="height:0%" data-pct="${barPct}"></div>
+          </div>
+          <div class="week-day-label">${d}</div>
+        </div>`;
+    });
+    setTimeout(() => {
+      document.querySelectorAll('[id^="wb-"]').forEach(el => {
+        el.style.height = el.dataset.pct + '%';
+      });
+    }, 300);
+  }
+
+  async function fetchStravaStats(refresh_token) {
+    try {
+      const res = await fetch(`/api/strava?action=stats&refresh_token=${encodeURIComponent(refresh_token)}`);
+      const data = await res.json();
+      if (data.totalKm !== undefined) {
+        localStorage.setItem('strava_refresh_token', data.refresh_token);
+        renderMileage(data.totalKm, data.weeklyDays);
+        return true;
+      }
+    } catch(e) { console.error('Strava fetch error', e); }
+    return false;
+  }
+
+  async function handleStravaCallback(code) {
+    try {
+      const res = await fetch(`/api/strava?action=exchange&code=${encodeURIComponent(code)}`);
+      const data = await res.json();
+      if (data.refresh_token) {
+        localStorage.setItem('strava_refresh_token', data.refresh_token);
+        localStorage.setItem('strava_athlete', data.athlete?.firstname || '');
+        window.history.replaceState({}, document.title, '/');
+        setStravaConnected(data.athlete?.firstname);
+        await fetchStravaStats(data.refresh_token);
+        return true;
+      }
+    } catch(e) { console.error('Strava exchange error', e); }
+    return false;
+  }
+
+  async function initStrava() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (code) { await handleStravaCallback(code); return; }
+
+    const saved = localStorage.getItem('strava_refresh_token');
+    const name  = localStorage.getItem('strava_athlete');
+    if (saved) {
+      setStravaConnected(name);
+      await fetchStravaStats(saved);
+      return;
+    }
+
+    // Not connected — show placeholder in correct units
+    renderMileage(228.5, [19.3, 0, 25.7, 16.1, 22.5, 35.4, 0]); // ~142mi / ~229km worth of placeholder
+  }
+
+  initStrava();
+
+  // ─── WEEKLY BARS (fallback render for scroll observer) ───
   const weekDays   = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   const kmData     = [12, 0, 16, 10, 14, 22, 0];
   const maxKm      = Math.max(...kmData, 1);
   const grid       = document.getElementById('weekly-grid');
   const todayIdx   = (new Date().getDay() + 6) % 7;
 
-  weekDays.forEach((d, i) => {
-    const pct = (kmData[i] / maxKm) * 100;
-    grid.innerHTML += `
-      <div class="week-bar">
-        <div class="week-fill-wrap">
-          <div class="week-fill ${i === todayIdx ? 'current' : ''}"
-               id="wb-${i}"
-               style="height:0%"
-               data-pct="${pct}"></div>
-        </div>
-        <div class="week-day-label">${d}</div>
-      </div>`;
-  });
+  if (!grid.children.length) {
+    weekDays.forEach((d, i) => {
+      const pct = (kmData[i] / maxKm) * 100;
+      grid.innerHTML += `
+        <div class="week-bar">
+          <div class="week-fill-wrap">
+            <div class="week-fill ${i === todayIdx ? 'current' : ''}"
+                 id="wb-${i}" style="height:0%" data-pct="${pct}"></div>
+          </div>
+          <div class="week-day-label">${d}</div>
+        </div>`;
+    });
+  }
 
   // ─── SCROLL REVEAL ───
   const observer = new IntersectionObserver((entries) => {
@@ -1514,8 +1644,11 @@
       if (e.isIntersecting) {
         e.target.classList.add('visible');
         if (e.target.id === 'mileage' || e.target.closest('#mileage')) {
+          // Only animate bars if not already populated by Strava
           setTimeout(() => {
-            document.getElementById('monthly-bar').style.width = '71%';
+            if (!localStorage.getItem('strava_refresh_token')) {
+              document.getElementById('monthly-bar').style.width = '71%';
+            }
             document.querySelectorAll('[id^="wb-"]').forEach(el => {
               el.style.height = el.dataset.pct + '%';
             });
