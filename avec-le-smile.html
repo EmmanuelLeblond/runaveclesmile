@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Run Avec le Smile — Emmanuel Leblond</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #080c10;
+    --surface:  #0d1318;
+    --card:     #111820;
+    --border:   #1c2730;
+    --blue:     #5bc8f5;
+    --blue-dim: #2a6a8a;
+    --blue-glow:#5bc8f530;
+    --text:     #e8f4f8;
+    --muted:    #5a7a8a;
+    --white:    #ffffff;
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: default;
+  }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--blue-dim); border-radius: 2px; }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    padding: 0 48px;
+    background: linear-gradient(to bottom, rgba(8,12,16,0.97) 80%, transparent);
+  }
+
+  .nav-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0 10px;
+    border-bottom: 1px solid rgba(28,39,48,0.7);
+  }
+
+  .nav-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0 10px;
+  }
+
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.35rem;
+    letter-spacing: 0.12em;
+    color: var(--blue);
+    text-decoration: none;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 40px;
+    list-style: none;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .nav-links a {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+    position: relative;
+    padding-bottom: 2px;
+  }
+
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: 0; right: 0;
+    height: 1px;
+    background: var(--blue);
+    transform: scaleX(0);
+    transition: transform 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--blue); }
+  .nav-links a:hover::after { transform: scaleX(1); }
+
+  /* ─── HERO ─── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 48px;
+    overflow: hidden;
+  }
+
+  /* animated track lines background */
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 120px,
+        rgba(91,200,245,0.03) 120px,
+        rgba(91,200,245,0.03) 121px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 80px,
+        rgba(91,200,245,0.02) 80px,
+        rgba(91,200,245,0.02) 81px
+      );
+    pointer-events: none;
+  }
+
+  /* horizon glow */
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 40%;
+    background: linear-gradient(to top, rgba(91,200,245,0.06), transparent);
+    pointer-events: none;
+  }
+
+
+
+  /* hero background image */
+  .hero-decoration {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 55%;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .hero-decoration img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    opacity: 0.13;
+    animation: breathe 6s ease-in-out infinite;
+    filter: grayscale(30%) blur(0.5px);
+  }
+
+  .hero-decoration .emoji-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(180px, 30vw, 380px);
+    line-height: 1;
+    opacity: 0.04;
+    user-select: none;
+    filter: blur(2px);
+    color: var(--blue);
+    animation: breathe 6s ease-in-out infinite;
+  }
+
+  /* right-edge fade so image blends into the dark bg */
+  .hero-decoration::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to right, var(--bg) 0%, transparent 30%, transparent 70%, var(--bg) 100%),
+      linear-gradient(to bottom, var(--bg) 0%, transparent 15%, transparent 85%, var(--bg) 100%);
+    pointer-events: none;
+  }
+
+  @keyframes breathe {
+    0%,100% { opacity: 0.13; transform: scale(1); }
+    50%      { opacity: 0.18; transform: scale(1.02); }
+  }
+
+  /* upload button */
+  .hero-img-upload {
+    position: absolute;
+    bottom: 80px;
+    right: 48px;
+    z-index: 10;
+  }
+
+  .hero-img-upload label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px dashed #2a3a44;
+    padding: 8px 14px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+    background: rgba(8,12,16,0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  .hero-img-upload label:hover {
+    color: var(--blue);
+    border-color: var(--blue-dim);
+    background: rgba(91,200,245,0.05);
+  }
+
+  .hero-img-upload input { display: none; }
+
+  @media (max-width: 640px) {
+    .hero-decoration { width: 100%; }
+    .hero-img-upload { bottom: 60px; right: 20px; }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 900px;
+    animation: heroIn 1s ease both;
+  }
+
+  @keyframes heroIn {
+    from { opacity:0; transform: translateY(30px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+
+  .hero-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    animation: heroIn 1s 0.1s ease both;
+  }
+
+  .hero-eyebrow .line {
+    width: 40px;
+    height: 1px;
+    background: var(--blue);
+  }
+
+  .hero-eyebrow span {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--blue);
+  }
+
+  .hero-account {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4.5rem, 14vw, 10rem);
+    line-height: 0.92;
+    letter-spacing: 0.04em;
+    color: var(--white);
+    animation: heroIn 1s 0.15s ease both;
+  }
+
+  .hero-account .accent { color: var(--blue); }
+
+  .hero-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 12px;
+    animation: heroIn 1s 0.25s ease both;
+  }
+
+  .hero-tagline {
+    margin-top: 28px;
+    font-size: clamp(1rem, 1.8vw, 1.25rem);
+    font-weight: 300;
+    font-style: italic;
+    color: var(--text);
+    max-width: 520px;
+    line-height: 1.6;
+    opacity: 0.85;
+    animation: heroIn 1s 0.35s ease both;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 16px;
+    margin-top: 44px;
+    flex-wrap: wrap;
+    animation: heroIn 1s 0.45s ease both;
+  }
+
+  .btn-primary {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 14px 32px;
+    background: var(--blue);
+    color: #000;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  }
+
+  .btn-primary:hover {
+    background: #fff;
+    box-shadow: 0 0 30px var(--blue-glow);
+  }
+
+  .btn-ghost {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 13px 32px;
+    background: transparent;
+    color: var(--blue);
+    font-weight: 600;
+    border: 1px solid var(--blue-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--blue);
+    background: var(--blue-glow);
+  }
+
+  .hero-scroll {
+    position: absolute;
+    bottom: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    animation: heroIn 1.2s 0.8s ease both;
+  }
+
+  .hero-scroll span {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .scroll-line {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--blue), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes scrollPulse {
+    0%,100% { opacity: 0.4; transform: scaleY(1); }
+    50%      { opacity: 1;   transform: scaleY(1.2); }
+  }
+
+  /* ─── SECTIONS SHARED ─── */
+  section {
+    padding: 100px 48px;
+    position: relative;
+  }
+
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 48px;
+  }
+
+  .section-label .line {
+    width: 30px;
+    height: 1px;
+    background: var(--blue);
+  }
+
+  .section-label span {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--blue);
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    letter-spacing: 0.05em;
+    line-height: 1;
+    color: var(--white);
+    margin-bottom: 20px;
+  }
+
+  .section-sub {
+    font-size: 1rem;
+    color: var(--muted);
+    max-width: 480px;
+    line-height: 1.7;
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), var(--blue-dim), var(--border), transparent);
+    margin: 0 48px;
+    width: calc(100% - 96px);
+  }
+
+  /* ─── COUNTDOWN ─── */
+  #countdown {
+    background: var(--surface);
+  }
+
+  .countdown-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .countdown-race-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .countdown-race-name::before,
+  .countdown-race-name::after {
+    content: '';
+    display: block;
+    width: 20px;
+    height: 1px;
+    background: var(--blue-dim);
+  }
+
+  .countdown-grid {
+    display: flex;
+    gap: 4px;
+    align-items: flex-start;
+    margin: 32px 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .countdown-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  .countdown-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 12vw, 9rem);
+    line-height: 1;
+    color: var(--white);
+    min-width: 2ch;
+    text-align: center;
+    position: relative;
+    transition: all 0.3s;
+  }
+
+  .countdown-number.updated {
+    color: var(--blue);
+    text-shadow: 0 0 30px var(--blue);
+  }
+
+  .countdown-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .countdown-sep {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 12vw, 9rem);
+    line-height: 1;
+    color: var(--blue-dim);
+    margin: 0 4px;
+    opacity: 0.6;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%,100% { opacity: 0.6; }
+    50%      { opacity: 0.15; }
+  }
+
+  .countdown-date-line {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .countdown-date-line strong { color: var(--text); font-weight: 400; }
+
+  /* ─── MILEAGE / STRAVA ─── */
+  #mileage {
+    background: var(--bg);
+  }
+
+  .mileage-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  @media (max-width: 768px) {
+    .mileage-layout { grid-template-columns: 1fr; }
+  }
+
+  .mileage-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mileage-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--blue), transparent);
+  }
+
+  .mileage-big {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 8vw, 6rem);
+    line-height: 1;
+    color: var(--white);
+    margin: 16px 0 8px;
+  }
+
+  .mileage-big span {
+    font-size: 0.4em;
+    color: var(--blue);
+    letter-spacing: 0.1em;
+    vertical-align: middle;
+  }
+
+  .mileage-sub-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .mileage-bar-wrap {
+    margin-top: 24px;
+  }
+
+  .mileage-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .mileage-bar-label span:last-child { color: var(--blue); }
+
+  .bar-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(to right, var(--blue-dim), var(--blue));
+    border-radius: 2px;
+    transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .weekly-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-top: 12px;
+  }
+
+  .week-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .week-fill-wrap {
+    width: 100%;
+    height: 60px;
+    display: flex;
+    align-items: flex-end;
+    background: rgba(255,255,255,0.02);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .week-fill {
+    width: 100%;
+    background: var(--blue-dim);
+    border-radius: 2px 2px 0 0;
+    transition: height 1s ease;
+  }
+
+  .week-fill.current { background: var(--blue); }
+
+  .week-day-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .strava-connect-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 24px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #fff;
+    background: #fc4c02;
+    border: 1px solid #fc4c02;
+    padding: 11px 22px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    font-weight: 600;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  }
+
+  .strava-connect-btn:hover {
+    background: #e04400;
+    border-color: #e04400;
+    box-shadow: 0 4px 20px rgba(252,76,2,0.35);
+  }
+
+  .strava-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .strava-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .strava-dot.live { background: #4caf50; box-shadow: 0 0 6px #4caf50; animation: pulse-dot 2s ease-in-out infinite; }
+
+  @keyframes pulse-dot {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+  }
+
+  .strava-status-text { color: var(--muted); }
+  .strava-status-text.live { color: #4caf50; }
+
+  .coros-note {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 12px;
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  /* ─── RACES ─── */
+  #races {
+    background: var(--surface);
+  }
+
+  .race-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 40px;
+  }
+
+  .race-table thead tr {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .race-table th {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 0 16px;
+    text-align: left;
+    font-weight: 400;
+  }
+
+  .race-table th:last-child { text-align: right; }
+
+  .race-row {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+
+  .race-row:hover { background: rgba(91,200,245,0.03); }
+
+  .race-row td {
+    padding: 22px 0;
+    vertical-align: middle;
+  }
+
+  .race-date {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    color: var(--blue);
+    letter-spacing: 0.08em;
+    min-width: 80px;
+    padding-right: 24px !important;
+  }
+
+  .race-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--white);
+  }
+
+  .race-location {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  .race-type {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 1px;
+    white-space: nowrap;
+  }
+
+  .type-xc {
+    background: rgba(91,200,245,0.1);
+    color: var(--blue);
+    border: 1px solid rgba(91,200,245,0.2);
+  }
+
+  .type-track {
+    background: rgba(255,200,80,0.08);
+    color: #f5c842;
+    border: 1px solid rgba(255,200,80,0.15);
+  }
+
+  .type-road {
+    background: rgba(120,200,120,0.08);
+    color: #80c880;
+    border: 1px solid rgba(120,200,120,0.15);
+  }
+
+  .race-links {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .race-link {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .race-link:hover {
+    color: var(--blue);
+    border-color: var(--blue-dim);
+  }
+
+  .race-link.highlight {
+    color: var(--blue);
+    border-color: var(--blue-dim);
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    padding: 48px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: gap;
+    gap: 20px;
+  }
+
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.1em;
+    color: var(--blue);
+  }
+
+  .footer-social {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .footer-social a {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-social a:hover { color: var(--blue); }
+
+  .footer-copy {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  /* ─── MOBILE ─── */
+  @media (max-width: 640px) {
+    nav { padding: 0 20px; }
+    .nav-links { gap: 20px; }
+    .nav-links li:nth-child(n+3) { display: none; }
+    section { padding: 72px 20px; }
+    .hero { padding: 0 20px; }
+    .divider { margin: 0 20px; width: calc(100% - 40px); }
+    footer { padding: 40px 20px; flex-direction: column; align-items: flex-start; }
+    .race-table { font-size: 0.9rem; }
+    .race-links { flex-direction: column; }
+  }
+
+  /* ─── SCROLL ANIMATIONS ─── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+
+  /* ─── INSTAGRAM ─── */
+  #instagram {
+    background: var(--bg);
+  }
+
+  .instagram-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+
+  @media (max-width: 900px) {
+    .instagram-layout { grid-template-columns: 1fr; gap: 40px; }
+  }
+
+  .instagram-left {}
+
+  .instagram-handle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  .instagram-handle:hover { opacity: 0.75; }
+
+  .ig-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+
+  .ig-handle-text { display: flex; flex-direction: column; }
+
+  .ig-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    color: var(--white);
+  }
+
+  .ig-username {
+    font-family: 'DM Mono', 'Barlow Condensed', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .instagram-desc {
+    font-size: 0.95rem;
+    color: #aac4cc;
+    line-height: 1.75;
+    margin-bottom: 28px;
+    max-width: 400px;
+  }
+
+  .ig-follow-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 13px 28px;
+    background: linear-gradient(135deg, #f09433 0%, #dc2743 50%, #bc1888 100%);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  }
+
+  .ig-follow-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(220,39,67,0.35);
+  }
+
+  .instagram-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .ig-embed-wrap {
+    width: 100%;
+    max-width: 400px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .ig-embed-wrap::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, #f09433, #dc2743, #bc1888);
+    z-index: 1;
+  }
+
+  /* Instagram embed iframe override */
+  .ig-embed-wrap iframe {
+    display: block;
+    width: 100% !important;
+    min-width: unset !important;
+    border: none;
+  }
+
+  /* ─── LANGUAGE TOGGLE ─── */
+  .lang-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    user-select: none;
+  }
+
+  .lang-flag {
+    font-size: 1.15rem;
+    line-height: 1;
+    transition: opacity 0.2s;
+  }
+
+  .lang-flag.dim { opacity: 0.35; }
+
+  .toggle-track {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    background: var(--border);
+    border-radius: 13px;
+    border: 1px solid #2a3a44;
+    cursor: pointer;
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+
+  .toggle-track:hover { border-color: var(--blue-dim); }
+
+  .toggle-thumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--blue);
+    box-shadow: 0 0 8px rgba(91,200,245,0.5);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .lang-fr .toggle-thumb { transform: translateX(22px); }
+  .lang-fr .toggle-track { background: #1a2a1a; border-color: #2a4a2a; }
+  .lang-fr .toggle-thumb { background: #5bc875; box-shadow: 0 0 8px rgba(91,200,117,0.5); }
+
+  /* text transitions */
+  [data-en][data-fr] {
+    transition: opacity 0.15s ease;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-top">
+    <a href="#" class="nav-logo">Run Avec le Smile</a>
+    <div class="lang-toggle" onclick="toggleLang()" title="Toggle language">
+      <span class="lang-flag" id="flag-us">🇺🇸</span>
+      <div class="toggle-track" id="toggle-track">
+        <div class="toggle-thumb"></div>
+      </div>
+      <span class="lang-flag dim" id="flag-fr">🇫🇷</span>
+    </div>
+  </div>
+  <div class="nav-bottom">
+    <ul class="nav-links">
+      <li><a href="#countdown" data-en="Countdown" data-fr="Compte à Rebours">Countdown</a></li>
+      <li><a href="#mileage" data-en="Training" data-fr="Entraînement">Training</a></li>
+      <li><a href="#races" data-en="Races" data-fr="Courses">Races</a></li>
+      <li><a href="#instagram" data-en="Instagram" data-fr="Instagram">Instagram</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-decoration" id="hero-decoration">
+    <div class="emoji-fallback" id="hero-emoji">🏃</div>
+  </div>
+  <div class="hero-img-upload">
+    <label title="Replace background image">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      Replace background photo
+      <input type="file" accept="image/*" id="hero-img-input" onchange="swapHeroImage(this)">
+    </label>
+  </div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">
+      <div class="line"></div>
+      <span data-en="The Road to France" data-fr="La Route vers la France">The Road to France</span>
+    </div>
+    <h1 class="hero-account">
+      Run Avec<br><span class="accent">le Smile</span>
+    </h1>
+    <div class="hero-name">Emmanuel Leblond</div>
+    <p class="hero-tagline" data-en="Chasing a spot on the French National Cross Country Team — one kilometer at a time. Follow the journey." data-fr="En quête d'une place dans l'équipe de France de cross-country — un kilomètre à la fois. Suivez l'aventure.">
+      Chasing a spot on the French National Cross Country Team — one kilometer at a time. Follow the journey.
+    </p>
+    <div class="hero-cta">
+      <a href="#countdown" class="btn-primary" data-en="See the Countdown" data-fr="Voir le Compte à Rebours">See the Countdown</a>
+      <a href="#races" class="btn-ghost" data-en="Race Schedule" data-fr="Calendrier des Courses">Race Schedule</a>
+    </div>
+  </div>
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    <span data-en="Scroll" data-fr="Défiler">Scroll</span>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- COUNTDOWN -->
+<section id="countdown">
+  <div class="countdown-wrapper reveal">
+    <div class="section-label" style="justify-content:center;">
+      <div class="line"></div>
+      <span data-en="Time Remaining" data-fr="Temps Restant">Time Remaining</span>
+      <div class="line"></div>
+    </div>
+    <h2 class="section-title" data-en="The Qualifying Race" data-fr="La Course de Sélection">The Qualifying Race</h2>
+    <p class="section-sub" style="margin: 0 auto 8px; text-align:center;" data-en="Every training run, every early morning, every hard interval — it all builds to this." data-fr="Chaque sortie, chaque matin difficile, chaque interval — tout mène à ce moment.">Every training run, every early morning, every hard interval — it all builds to this.</p>
+
+    <div class="countdown-race-name">
+      🏁 Le Cross de Sélection
+    </div>
+
+    <div class="countdown-grid">
+      <div class="countdown-unit">
+        <div class="countdown-number" id="cd-days">000</div>
+        <div class="countdown-label" data-en="Days" data-fr="Jours">Days</div>
+      </div>
+      <div class="countdown-sep">:</div>
+      <div class="countdown-unit">
+        <div class="countdown-number" id="cd-hours">00</div>
+        <div class="countdown-label" data-en="Hours" data-fr="Heures">Hours</div>
+      </div>
+      <div class="countdown-sep">:</div>
+      <div class="countdown-unit">
+        <div class="countdown-number" id="cd-mins">00</div>
+        <div class="countdown-label" data-en="Minutes" data-fr="Minutes">Minutes</div>
+      </div>
+      <div class="countdown-sep">:</div>
+      <div class="countdown-unit">
+        <div class="countdown-number" id="cd-secs">00</div>
+        <div class="countdown-label" data-en="Seconds" data-fr="Secondes">Seconds</div>
+      </div>
+    </div>
+
+    <div class="countdown-date-line">
+      <strong>22 Novembre 2026</strong> — Allones, France
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- MILEAGE -->
+<section id="mileage">
+  <div class="section-label reveal">
+    <div class="line"></div>
+    <span data-en="Training Load" data-fr="Charge d'Entraînement">Training Load</span>
+  </div>
+  <div class="mileage-layout">
+    <div class="reveal">
+      <h2 class="section-title" data-en="Monthly<br>Mileage" data-fr="Kilométrage<br>Mensuel">Monthly<br>Mileage</h2>
+      <p class="section-sub" data-en="Training data synced from Strava. Connect once and your monthly km updates automatically after every run." data-fr="Données synchronisées depuis Strava. Connectez une fois et votre kilométrage mensuel se met à jour automatiquement après chaque sortie.">Training data synced from Strava. Connect once and your monthly km updates automatically after every run.</p>
+
+      <a class="strava-connect-btn" href="https://www.strava.com/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&response_type=code&scope=activity:read_all" id="strava-btn" target="_blank" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+        <span data-en="Connect with Strava" data-fr="Connecter avec Strava">Connect with Strava</span>
+      </a>
+
+      <div class="strava-status" id="strava-status">
+        <div class="strava-dot" id="strava-dot"></div>
+        <span class="strava-status-text" id="strava-status-text" data-en="Not connected — data shown is a placeholder" data-fr="Non connecté — données affichées à titre indicatif">Not connected — data shown is a placeholder</span>
+      </div>
+
+      <p class="coros-note" data-en="To go live: create a free Strava API app at strava.com/settings/api, add your Client ID above, and deploy a small Vercel function to handle the OAuth token exchange. I can build that for you when you're ready." data-fr="Pour activer : créez une app Strava gratuite sur strava.com/settings/api, ajoutez votre Client ID ci-dessus, et déployez une petite fonction Vercel. Je peux vous aider quand vous êtes prêt.">To go live: create a free Strava API app at strava.com/settings/api, add your Client ID above, and deploy a small Vercel function to handle the OAuth token exchange. I can build that for you when you're ready.</p>
+    </div>
+    <div class="reveal reveal-delay-1">
+      <!-- Monthly card -->
+      <div class="mileage-card" style="margin-bottom:20px;">
+        <div class="mileage-sub-label" data-en="This Month — February 2026" data-fr="Ce Mois — Février 2026">This Month — February 2026</div>
+        <div class="mileage-big" id="monthly-km">142 <span>km</span></div>
+        <div class="mileage-bar-wrap">
+          <div class="mileage-bar-label">
+            <span data-en="Monthly target" data-fr="Objectif mensuel">Monthly target</span>
+            <span id="monthly-pct">71%</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" id="monthly-bar" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly breakdown -->
+      <div class="mileage-card">
+        <div class="mileage-sub-label" style="margin-bottom:16px;" data-en="This Week — Daily Breakdown" data-fr="Cette Semaine — Détail Journalier">This Week — Daily Breakdown</div>
+        <div class="weekly-grid" id="weekly-grid">
+          <!-- filled by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- RACES -->
+<section id="races">
+  <div class="section-label reveal">
+    <div class="line"></div>
+    <span data-en="Competition Calendar" data-fr="Calendrier des Compétitions">Competition Calendar</span>
+  </div>
+  <div class="reveal">
+    <h2 class="section-title" data-en="Upcoming Races" data-fr="Prochaines Courses">Upcoming Races</h2>
+    <p class="section-sub" data-en="The full race schedule on the path to the French National XC team." data-fr="Le calendrier complet sur la route vers l'équipe de France de cross.">The full race schedule on the path to the French National XC team.</p>
+  </div>
+
+  <table class="race-table reveal reveal-delay-1">
+    <thead>
+      <tr>
+        <th data-en="Date" data-fr="Date">Date</th>
+        <th data-en="Race" data-fr="Course">Race</th>
+        <th data-en="Type" data-fr="Type">Type</th>
+        <th style="text-align:right;" data-en="Links" data-fr="Liens">Links</th>
+      </tr>
+    </thead>
+    <tbody id="race-tbody">
+      <tr class="race-row">
+        <td class="race-date">Feb 28</td>
+        <td>
+          <div class="race-name">Centennial Conference Indoor Meet</div>
+          <div class="race-location">Lancaster, PA — DMR</div>
+        </td>
+        <td><span class="race-type type-track">Track</span></td>
+        <td class="race-links">
+          <a href="#" class="race-link">📍 Info</a>
+          <a href="#" class="race-link">🔴 Live Results</a>
+        </td>
+      </tr>
+      <tr class="race-row">
+        <td class="race-date">Mar 13–14</td>
+        <td>
+          <div class="race-name">NCAA Indoor National Championships</div>
+          <div class="race-location">Birmingham, AL — 5k / 3k Double</div>
+        </td>
+        <td><span class="race-type type-track">Track</span></td>
+        <td class="race-links">
+          <a href="#" class="race-link highlight">📺 Watch Live</a>
+          <a href="#" class="race-link">🔴 Live Results</a>
+        </td>
+      </tr>
+      <tr class="race-row">
+        <td class="race-date">Mar 27</td>
+        <td>
+          <div class="race-name">Raleigh Relays</div>
+          <div class="race-location">Raleigh, NC — 10k</div>
+        </td>
+        <td><span class="race-type type-track">Track</span></td>
+        <td class="race-links">
+          <a href="#" class="race-link">📍 Info</a>
+          <a href="#" class="race-link">🔴 Live Results</a>
+        </td>
+      </tr>
+      <tr class="race-row">
+        <td class="race-date">May 1–3</td>
+        <td>
+          <div class="race-name">Centennial Conference Championships</div>
+          <div class="race-location">Gettysburg, PA</div>
+        </td>
+        <td><span class="race-type type-track">Track</span></td>
+        <td class="race-links">
+          <a href="#" class="race-link">📍 Info</a>
+          <a href="#" class="race-link">🔴 Live Results</a>
+        </td>
+      </tr>
+      <tr class="race-row">
+        <td class="race-date">May 21–23</td>
+        <td>
+          <div class="race-name">NCAA Outdoor National Championships</div>
+          <div class="race-location">La Crosse, WI</div>
+        </td>
+        <td><span class="race-type type-track">Track</span></td>
+        <td class="race-links">
+          <a href="#" class="race-link highlight">📺 Watch Live</a>
+          <a href="#" class="race-link">🔴 Live Results</a>
+        </td>
+      </tr>
+      <tr class="race-row" style="border-color: rgba(91,200,245,0.3);">
+        <td class="race-date" style="color: var(--blue);">Nov 22</td>
+        <td>
+          <div class="race-name" style="color: var(--blue);">Le Cross de Sélection ⭐</div>
+          <div class="race-location">Allones, France — French National Team Qualifier</div>
+        </td>
+        <td><span class="race-type type-xc">XC Qualifier</span></td>
+        <td class="race-links">
+          <a href="#" class="race-link highlight">📺 Watch Live</a>
+          <a href="#" class="race-link">🔴 Live Results</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="divider"></div>
+
+<!-- INSTAGRAM -->
+<section id="instagram">
+  <div class="section-label reveal">
+    <div class="line"></div>
+    <span data-en="Follow the Journey" data-fr="Suivre l'Aventure">Follow the Journey</span>
+  </div>
+  <div class="instagram-layout">
+    <div class="instagram-left reveal">
+      <a class="instagram-handle" href="https://www.instagram.com/runaveclesmile/" target="_blank" rel="noopener">
+        <div class="ig-avatar">🏃</div>
+        <div class="ig-handle-text">
+          <span class="ig-name">Run Avec le Smile</span>
+          <span class="ig-username">@runaveclesmile</span>
+        </div>
+      </a>
+      <h2 class="section-title" data-en="On Instagram" data-fr="Sur Instagram">On Instagram</h2>
+      <p class="instagram-desc" data-en="Behind-the-scenes training, race day updates, and the full story of chasing a spot on the French National Cross Country Team. Follow along for the journey." data-fr="Entraînements en coulisses, comptes-rendus de courses, et l'histoire complète de la quête d'une sélection en équipe de France de cross. Suivez l'aventure.">
+        Behind-the-scenes training, race day updates, and the full story of chasing a spot on the French National Cross Country Team. Follow along for the journey.
+      </p>
+      <a class="ig-follow-btn" href="https://www.instagram.com/runaveclesmile/" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+        <span data-en="Follow @runaveclesmile" data-fr="Suivre @runaveclesmile">Follow @runaveclesmile</span>
+      </a>
+    </div>
+
+    <div class="instagram-right reveal reveal-delay-1">
+      <div class="ig-embed-wrap">
+        <blockquote
+          class="instagram-media"
+          data-instgrm-permalink="https://www.instagram.com/p/DTTB3MICkE7/"
+          data-instgrm-version="14"
+          style="background:#fff; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin:0; max-width:400px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);">
+        </blockquote>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Run Avec le Smile</div>
+  <div class="footer-social">
+    <a href="https://www.instagram.com/runaveclesmile/" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://strava.com" target="_blank" rel="noopener">Strava</a>
+    <a href="https://www.coros.com" target="_blank" rel="noopener">Coros</a>
+  </div>
+  <div class="footer-copy">© 2026 Emmanuel Leblond</div>
+</footer>
+
+<script>
+  // ─── HERO IMAGE SWAP ───
+  function swapHeroImage(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const url  = URL.createObjectURL(file);
+    const dec  = document.getElementById('hero-decoration');
+
+    // remove emoji fallback if present
+    const emoji = document.getElementById('hero-emoji');
+    if (emoji) emoji.remove();
+
+    // insert or update img
+    let img = dec.querySelector('img');
+    if (!img) {
+      img = document.createElement('img');
+      dec.insertBefore(img, dec.firstChild);
+    }
+    img.src = url;
+    img.alt = 'Emmanuel Leblond running';
+  }
+  let isFrench = false;
+
+  function toggleLang() {
+    isFrench = !isFrench;
+    const track = document.getElementById('toggle-track');
+    const flagUs = document.getElementById('flag-us');
+    const flagFr = document.getElementById('flag-fr');
+
+    if (isFrench) {
+      track.classList.add('lang-fr');
+      flagUs.classList.add('dim');
+      flagFr.classList.remove('dim');
+    } else {
+      track.classList.remove('lang-fr');
+      flagUs.classList.remove('dim');
+      flagFr.classList.add('dim');
+    }
+
+    // swap all translatable elements
+    document.querySelectorAll('[data-en][data-fr]').forEach(el => {
+      el.style.opacity = '0';
+      setTimeout(() => {
+        el.innerHTML = isFrench ? el.dataset.fr : el.dataset.en;
+        el.style.opacity = '1';
+      }, 120);
+    });
+  }
+
+  // ─── COUNTDOWN ───
+  const raceDate = new Date('2026-11-22T09:00:00');
+
+  function updateCountdown() {
+    const now  = new Date();
+    const diff = raceDate - now;
+    if (diff <= 0) {
+      document.getElementById('cd-days').textContent  = '000';
+      document.getElementById('cd-hours').textContent = '00';
+      document.getElementById('cd-mins').textContent  = '00';
+      document.getElementById('cd-secs').textContent  = '00';
+      return;
+    }
+    const days  = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins  = Math.floor((diff % 3600000)  / 60000);
+    const secs  = Math.floor((diff % 60000)    / 1000);
+
+    const set = (id, val, pad) => {
+      const el = document.getElementById(id);
+      const newVal = String(val).padStart(pad, '0');
+      if (el.textContent !== newVal) {
+        el.textContent = newVal;
+        el.classList.add('updated');
+        setTimeout(() => el.classList.remove('updated'), 300);
+      }
+    };
+    set('cd-days',  days,  3);
+    set('cd-hours', hours, 2);
+    set('cd-mins',  mins,  2);
+    set('cd-secs',  secs,  2);
+  }
+
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+
+  // ─── WEEKLY BARS ───
+  const weekDays   = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const kmData     = [12, 0, 16, 10, 14, 22, 0];
+  const maxKm      = Math.max(...kmData, 1);
+  const grid       = document.getElementById('weekly-grid');
+  const todayIdx   = (new Date().getDay() + 6) % 7;
+
+  weekDays.forEach((d, i) => {
+    const pct = (kmData[i] / maxKm) * 100;
+    grid.innerHTML += `
+      <div class="week-bar">
+        <div class="week-fill-wrap">
+          <div class="week-fill ${i === todayIdx ? 'current' : ''}"
+               id="wb-${i}"
+               style="height:0%"
+               data-pct="${pct}"></div>
+        </div>
+        <div class="week-day-label">${d}</div>
+      </div>`;
+  });
+
+  // ─── SCROLL REVEAL ───
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        if (e.target.id === 'mileage' || e.target.closest('#mileage')) {
+          setTimeout(() => {
+            document.getElementById('monthly-bar').style.width = '71%';
+            document.querySelectorAll('[id^="wb-"]').forEach(el => {
+              el.style.height = el.dataset.pct + '%';
+            });
+          }, 200);
+        }
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  observer.observe(document.getElementById('mileage'));
+</script>
+
+<!-- Instagram embed loader -->
+<script async src="//www.instagram.com/embed.js"></script>
+</body>
+</html>
