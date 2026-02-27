@@ -2299,12 +2299,13 @@
     renderWeekGrid(allWeeks[0] || Array(7).fill([]), 0);
   }
 
-  async function fetchStravaStats(refresh_token) {
+  async function fetchStravaStats() {
     try {
-      const res = await fetch(`/api/strava?action=stats&refresh_token=${encodeURIComponent(refresh_token)}`);
+      // No token needed — server uses Emmanuel's stored token automatically
+      const res = await fetch('/api/strava?action=stats');
       const data = await res.json();
       if (data.totalKm !== undefined) {
-        localStorage.setItem('strava_refresh_token', data.refresh_token);
+        setStravaConnected();
         renderMileage(data.totalKm, data.weeklyDays);
         if (data.latestActivity) renderLatestActivity(data.latestActivity);
         return true;
@@ -2313,46 +2314,15 @@
     return false;
   }
 
-  async function handleStravaCallback(code) {
-    try {
-      const res = await fetch(`/api/strava?action=exchange&code=${encodeURIComponent(code)}`);
-      const data = await res.json();
-      if (data.refresh_token) {
-        localStorage.setItem('strava_refresh_token', data.refresh_token);
-        localStorage.setItem('strava_athlete', data.athlete?.firstname || '');
-        window.history.replaceState({}, document.title, '/');
-        setStravaConnected(data.athlete?.firstname);
-        await fetchStravaStats(data.refresh_token);
-        return true;
-      }
-    } catch(e) { console.error('Strava exchange error', e); }
-    return false;
-  }
-
   async function initStrava() {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-    if (code) { await handleStravaCallback(code); return; }
-
-    const saved = localStorage.getItem('strava_refresh_token');
-    const name  = localStorage.getItem('strava_athlete');
-    if (saved) {
-      setStravaConnected(name);
-      await fetchStravaStats(saved);
-      return;
+    // Always fetch — all visitors see Emmanuel's live data
+    const ok = await fetchStravaStats();
+    if (!ok) {
+      // API unavailable — show placeholder so page still looks good
+      renderMileage(228.5, [[
+        [12.1, 8.0], [], [16.0], [10.2], [14.1, 7.2], [22.0], []
+      ]]);
     }
-
-    // Not connected — show placeholder in correct units
-    // Each day is an array of runs (supports doubles)
-    renderMileage(228.5, [
-      [12.1, 8.0],  // Mon — double
-      [],           // Tue — rest
-      [16.0],       // Wed
-      [10.2],       // Thu
-      [14.1, 7.2],  // Fri — double
-      [22.0],       // Sat — long run
-      []            // Sun — rest
-    ]);
   }
 
   document.addEventListener('DOMContentLoaded', () => initStrava());
