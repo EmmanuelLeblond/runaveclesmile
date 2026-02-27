@@ -3,6 +3,32 @@ export default async function handler(req, res) {
 
   const { action, code, refresh_token } = req.query;
   const CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET;
+  const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;
+
+  // Helper to decode the polyline to get Start and End coordinates for pins
+  function decodePolyline(encoded) {
+    const points = [];
+    let index = 0, lat = 0, lng = 0;
+    while (index < encoded.length) {
+      let b, shift = 0, result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      lat += ((result & 1) ? ~(result >> 1) : (result >> 1));
+      shift = 0; result = 0;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      lng += ((result & 1) ? ~(result >> 1) : (result >> 1));
+      // Mapbox expects [longitude, latitude]
+      points.push([lng / 1e5, lat / 1e5]);
+    }
+    return points;
+  }
 
   if (action === 'exchange' && code) {
     const r = await fetch('https://www.strava.com/oauth/token', {
@@ -45,11 +71,11 @@ export default async function handler(req, res) {
       })
     ]);
 
-    const activities     = await actRes.json();
-    const latestArr      = await latestRes.json();
-    const latestActivity = latestArr[0] || null;
-    const runs           = activities.filter(a => a.type === 'Run');
-    const totalKm        = runs.reduce((sum, a) => sum + a.distance / 1000, 0);
+    const activities      = await actRes.json();
+    const latestArr       = await latestRes.json();
+    const latestActivity  = latestArr[0] || null;
+    const runs            = activities.filter(a => a.type === 'Run');
+    const totalKm         = runs.reduce((sum, a) => sum + a.distance / 1000, 0);
 
     const weeklyDays = [0,1,2,3,4,5,6].map(i => {
       const d = new Date();
@@ -64,6 +90,29 @@ export default async function handler(req, res) {
         .map(a => Math.round((a.distance / 1000) * 10) / 10)
         .sort((a, b) => b - a);
     });
+
+    // Generate Mapbox URLs securely on the backend
+    let mapUrlDark = null;
+    let mapUrlLight = null;
+
+    if (latestActivity?.map?.summary_polyline && MAPBOX_TOKEN) {
+      const encoded = latestActivity.map.summary_polyline;
+      const points = decodePolyline(encoded);
+      
+      if (points.length >= 2) {
+        const startLng = points[0][0].toFixed(5);
+        const startLat = points[0][1].toFixed(5);
+        const endLng = points[points.length - 1][0].toFixed(5);
+        const endLat = points[points.length - 1][1].toFixed(5);
+
+        // Adjust path color to contrast well with light vs dark maps
+        const overlaysDark = `path-3+5bc8f5-1(${encodeURIComponent(encoded)}),pin-s+4caf50(${startLng},${startLat}),pin-s+fc4c02(${endLng},${endLat})`;
+        const overlaysLight = `path-3+1a7fb5-1(${encodeURIComponent(encoded)}),pin-s+4caf50(${startLng},${startLat}),pin-s+fc4c02(${endLng},${endLat})`;
+
+        mapUrlDark = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${overlaysDark}/auto/400x160@2x?padding=20&access_token=${MAPBOX_TOKEN}`;
+        mapUrlLight = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${overlaysLight}/auto/400x160@2x?padding=20&access_token=${MAPBOX_TOKEN}`;
+      }
+    }
 
     return res.json({
       totalKm: Math.round(totalKm * 10) / 10,
@@ -83,7 +132,9 @@ export default async function handler(req, res) {
         suffer_score:         latestActivity.suffer_score,
         total_elevation_gain: latestActivity.total_elevation_gain,
         type:                 latestActivity.type,
-        map: { summary_polyline: latestActivity.map?.summary_polyline || '' }
+        map: { summary_polyline: latestActivity.map?.summary_polyline || '' },
+        mapUrlDark,           // Newly injected property
+        mapUrlLight           // Newly injected property
       } : null
     });
   }
