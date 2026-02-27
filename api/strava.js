@@ -105,29 +105,28 @@ export default async function handler(req, res) {
         const endLng = points[points.length - 1][0].toFixed(5);
         const endLat = points[points.length - 1][1].toFixed(5);
 
-        // Mapbox doesn't have native "circle" pins, so we fetch tiny circle PNGs from an icon service
-        const startIcon = encodeURIComponent('https://img.icons8.com/ios-filled/14/4caf50/filled-circle.png');
-        const endIcon = encodeURIComponent('https://img.icons8.com/ios-filled/14/fc4c02/filled-circle.png');
+        // Fetch clean 20px circle icons for start and stop
+        const startIcon = encodeURIComponent('https://img.icons8.com/ios-filled/20/4caf50/filled-circle.png');
+        const endIcon = encodeURIComponent('https://img.icons8.com/ios-filled/20/fc4c02/filled-circle.png');
         const safePolyline = encodeURIComponent(encoded);
 
-        // We layer a thick, semi-transparent path (-0.3) UNDER a thin, solid path (-1) to create the glowing effect
+        // Single, clean, vibrant blue path (00e5ff) with no glow
         const overlaysDark = [
-          `path-8+5bc8f5-0.3(${safePolyline})`,
-          `path-2+5bc8f5-1(${safePolyline})`,
+          `path-3+00e5ff-1(${safePolyline})`,
           `url-${startIcon}(${startLng},${startLat})`,
           `url-${endIcon}(${endLng},${endLat})`
         ].join(',');
 
+        // Darker blue path for light mode
         const overlaysLight = [
-          `path-8+1a7fb5-0.3(${safePolyline})`,
-          `path-2+1a7fb5-1(${safePolyline})`,
+          `path-3+1a7fb5-1(${safePolyline})`,
           `url-${startIcon}(${startLng},${startLat})`,
           `url-${endIcon}(${endLng},${endLat})`
         ].join(',');
 
-        // Padding is increased to 50 to ensure the whole route zooms out and fits neatly in the frame
-        mapUrlDark = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${overlaysDark}/auto/400x160@2x?padding=50&access_token=${MAPBOX_TOKEN}`;
-        mapUrlLight = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${overlaysLight}/auto/400x160@2x?padding=50&access_token=${MAPBOX_TOKEN}`;
+        // Padding reduced to 15 to make the route snug and large
+        mapUrlDark = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${overlaysDark}/auto/400x160@2x?padding=15&access_token=${MAPBOX_TOKEN}`;
+        mapUrlLight = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${overlaysLight}/auto/400x160@2x?padding=15&access_token=${MAPBOX_TOKEN}`;
       }
     }
 
