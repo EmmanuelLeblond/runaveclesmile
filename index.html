@@ -156,9 +156,9 @@
     right: 0;
     top: 0;
     bottom: 0;
-    width: 55%;
+    width: 52%;
     pointer-events: none;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .hero-decoration img {
@@ -166,44 +166,30 @@
     height: 100%;
     object-fit: cover;
     object-position: center top;
-    opacity: 0.13;
+    opacity: 0.55;
     animation: breathe 6s ease-in-out infinite;
-    filter: grayscale(30%) blur(0.5px);
+    filter: grayscale(20%);
   }
 
-  .hero-decoration .emoji-fallback {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: clamp(180px, 30vw, 380px);
-    line-height: 1;
-    opacity: 0.04;
-    user-select: none;
-    filter: blur(2px);
-    color: var(--blue);
-    animation: breathe 6s ease-in-out infinite;
-  }
-
-  /* right-edge fade so image blends into the dark bg */
+  /* fade left edge only so image blends into dark bg without washing itself out */
   .hero-decoration::after {
     content: '';
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(to right, var(--bg) 0%, transparent 30%, transparent 70%, var(--bg) 100%),
-      linear-gradient(to bottom, var(--bg) 0%, transparent 15%, transparent 85%, var(--bg) 100%);
+      linear-gradient(to right, var(--bg) 0%, rgba(8,12,16,0.3) 35%, transparent 65%),
+      linear-gradient(to bottom, var(--bg) 0%, transparent 12%, transparent 88%, var(--bg) 100%);
     pointer-events: none;
   }
 
   @keyframes breathe {
-    0%,100% { opacity: 0.13; transform: scale(1); }
-    50%      { opacity: 0.18; transform: scale(1.02); }
+    0%,100% { opacity: 0.55; transform: scale(1); }
+    50%      { opacity: 0.65; transform: scale(1.02); }
   }
 
   @media (max-width: 640px) {
-    .hero-decoration { width: 100%; }
+    .hero-decoration { width: 100%; opacity: 0.4; }
+    .hero-decoration img { opacity: 0.35; }
   }
 
   .hero-content {
@@ -530,7 +516,7 @@
     border: 1px solid var(--border);
     padding: 32px;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .mileage-card::before {
@@ -654,6 +640,16 @@
 
   .week-fill.current { background: var(--blue); }
   .week-fill.current.run2 { background: rgba(91,200,245,0.6); }
+
+  .week-bar.future .week-fill-wrap {
+    background: rgba(255,255,255,0.01);
+    border: 1px dashed rgba(255,255,255,0.04);
+  }
+
+  .week-day-label.today {
+    color: var(--blue);
+    font-weight: 600;
+  }
 
   .week-bar:hover .week-fill { background: var(--blue); }
   .week-bar:hover .week-fill.run2 { background: rgba(91,200,245,0.7); }
@@ -1645,22 +1641,13 @@
   }
 
   function setStravaConnected(name) {
+    // Hide the connect button, status line, and description — users don't need to see this
     const btn = document.getElementById('strava-btn');
-    if (!btn) return;
-    btn.style.background = '#333';
-    btn.style.borderColor = '#444';
-    btn.style.cursor = 'default';
-    btn.href = '#';
-    btn.onclick = e => e.preventDefault();
-    const btnText = document.getElementById('strava-btn-text');
-    if (btnText) btnText.textContent = `✓ Connected${name ? ' as ' + name : ''}`;
-    const dot = document.getElementById('strava-dot');
-    if (dot) dot.classList.add('live');
-    const txt = document.getElementById('strava-status-text');
-    if (txt) {
-      txt.textContent = isFrench ? 'Données en direct depuis Strava' : 'Live data from Strava';
-      txt.classList.add('live');
-    }
+    if (btn) btn.style.display = 'none';
+    const status = document.getElementById('strava-status');
+    if (status) status.style.display = 'none';
+    const desc = document.querySelector('#mileage .section-sub');
+    if (desc) desc.style.display = 'none';
   }
 
   // Store raw km values globally so we can re-render on language toggle
@@ -1674,14 +1661,18 @@
     const target  = getTarget();
     const unit    = getUnit();
 
-    // weeklyDays is now an array of arrays: [[run1km, run2km], [run1km], ...]
-    // For backwards compat also accept flat numbers
+    // weeklyDays is an array of arrays: [[run1km, run2km], [], [run1km], ...]
     const normalize = d => Array.isArray(d) ? d : (d > 0 ? [d] : []);
     const days7 = weeklyDays.map(normalize);
 
+    const todayIdx = (new Date().getDay() + 6) % 7; // 0=Mon ... 6=Sun
+
+    // Blank out future days
+    const days7Masked = days7.map((runs, i) => i > todayIdx ? [] : runs);
+
     // Total display value per day
-    const dayTotals = days7.map(runs => runs.reduce((s, k) => s + k, 0));
-    const displayTotals = dayTotals.map(k => toDisplay(k));
+    const dayTotalsKm = days7Masked.map(runs => runs.reduce((s, k) => s + k, 0));
+    const displayTotals = dayTotalsKm.map(k => toDisplay(k));
     const totalDisplay = toDisplay(totalKm);
     const pct = Math.min(Math.round((totalDisplay / target) * 100), 100);
 
@@ -1700,18 +1691,22 @@
     if (!grid) return;
     grid.innerHTML = '';
     const dayLabels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-    const maxVal  = Math.max(...displayTotals, 0.1);
-    const todayIdx = (new Date().getDay() + 6) % 7;
 
-    days7.forEach((runs, i) => {
-      const isToday  = i === todayIdx;
-      const total    = displayTotals[i];
+    // Max across days that have data (for scaling)
+    const maxVal = Math.max(...displayTotals.filter((_, i) => i <= todayIdx), 0.1);
+
+    days7Masked.forEach((runs, i) => {
+      const isToday   = i === todayIdx;
+      const isFuture  = i > todayIdx;
+      const total     = displayTotals[i];
       const runDisplays = runs.map(k => toDisplay(k));
-      const hasRuns  = runDisplays.length > 0 && total > 0;
+      const hasRuns   = runDisplays.length > 0 && total > 0;
 
-      // Build tooltip HTML
+      // Tooltip
       let tooltipHtml = '';
-      if (!hasRuns) {
+      if (isFuture) {
+        tooltipHtml = `<span style="color:var(--muted);font-size:0.7rem">Upcoming</span>`;
+      } else if (!hasRuns) {
         tooltipHtml = `<span style="color:var(--muted);font-size:0.7rem">Rest day</span>`;
       } else {
         runDisplays.forEach((d, ri) => {
@@ -1722,10 +1717,10 @@
         }
       }
 
-      // Build stacked bar segments
+      // Stacked bar segments
       let stackHtml = '';
-      if (hasRuns) {
-        const totalHeight = (total / maxVal) * 100; // % of 60px container
+      if (hasRuns && !isFuture) {
+        const totalHeight = Math.max((total / maxVal) * 100, 8); // min 8% so tiny runs show
         runDisplays.forEach((d, ri) => {
           const segH = (d / total) * totalHeight;
           const cls  = `week-fill${isToday ? ' current' : ''}${ri > 0 ? ' run2' : ''}`;
@@ -1734,12 +1729,12 @@
       }
 
       grid.innerHTML += `
-        <div class="week-bar">
+        <div class="week-bar${isFuture ? ' future' : ''}">
           <div class="week-fill-wrap">
-            <div class="week-stack" id="ws-${i}">${stackHtml}</div>
+            <div class="week-stack">${stackHtml}</div>
             <div class="week-tooltip">${tooltipHtml}</div>
           </div>
-          <div class="week-day-label">${dayLabels[i]}</div>
+          <div class="week-day-label${isToday ? ' today' : ''}">${dayLabels[i]}</div>
         </div>`;
     });
   }
