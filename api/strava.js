@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   const CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET;
   const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;
 
-  // Helper to decode the polyline to get Start and End coordinates for pins
+  // Helper to decode the polyline to get Start and End coordinates for our pins
   function decodePolyline(encoded) {
     const points = [];
     let index = 0, lat = 0, lng = 0;
@@ -105,12 +105,29 @@ export default async function handler(req, res) {
         const endLng = points[points.length - 1][0].toFixed(5);
         const endLat = points[points.length - 1][1].toFixed(5);
 
-        // Adjust path color to contrast well with light vs dark maps
-        const overlaysDark = `path-3+5bc8f5-1(${encodeURIComponent(encoded)}),pin-s+4caf50(${startLng},${startLat}),pin-s+fc4c02(${endLng},${endLat})`;
-        const overlaysLight = `path-3+1a7fb5-1(${encodeURIComponent(encoded)}),pin-s+4caf50(${startLng},${startLat}),pin-s+fc4c02(${endLng},${endLat})`;
+        // Mapbox doesn't have native "circle" pins, so we fetch tiny circle PNGs from an icon service
+        const startIcon = encodeURIComponent('https://img.icons8.com/ios-filled/14/4caf50/filled-circle.png');
+        const endIcon = encodeURIComponent('https://img.icons8.com/ios-filled/14/fc4c02/filled-circle.png');
+        const safePolyline = encodeURIComponent(encoded);
 
-        mapUrlDark = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${overlaysDark}/auto/400x160@2x?padding=20&access_token=${MAPBOX_TOKEN}`;
-        mapUrlLight = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${overlaysLight}/auto/400x160@2x?padding=20&access_token=${MAPBOX_TOKEN}`;
+        // We layer a thick, semi-transparent path (-0.3) UNDER a thin, solid path (-1) to create the glowing effect
+        const overlaysDark = [
+          `path-8+5bc8f5-0.3(${safePolyline})`,
+          `path-2+5bc8f5-1(${safePolyline})`,
+          `url-${startIcon}(${startLng},${startLat})`,
+          `url-${endIcon}(${endLng},${endLat})`
+        ].join(',');
+
+        const overlaysLight = [
+          `path-8+1a7fb5-0.3(${safePolyline})`,
+          `path-2+1a7fb5-1(${safePolyline})`,
+          `url-${startIcon}(${startLng},${startLat})`,
+          `url-${endIcon}(${endLng},${endLat})`
+        ].join(',');
+
+        // Padding is increased to 50 to ensure the whole route zooms out and fits neatly in the frame
+        mapUrlDark = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${overlaysDark}/auto/400x160@2x?padding=50&access_token=${MAPBOX_TOKEN}`;
+        mapUrlLight = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${overlaysLight}/auto/400x160@2x?padding=50&access_token=${MAPBOX_TOKEN}`;
       }
     }
 
@@ -133,8 +150,8 @@ export default async function handler(req, res) {
         total_elevation_gain: latestActivity.total_elevation_gain,
         type:                 latestActivity.type,
         map: { summary_polyline: latestActivity.map?.summary_polyline || '' },
-        mapUrlDark,           // Newly injected property
-        mapUrlLight           // Newly injected property
+        mapUrlDark,
+        mapUrlLight
       } : null
     });
   }
