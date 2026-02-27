@@ -673,13 +673,6 @@
     transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .weekly-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-    margin-top: 12px;
-  }
-
   .week-bar {
     display: flex;
     flex-direction: column;
@@ -736,6 +729,14 @@
     display: flex;
     align-items: center;
     gap: 8px;
+  }
+
+  .weekly-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
   }
 
   .week-nav-btn {
@@ -1965,8 +1966,8 @@
   setInterval(updateCountdown, 1000);
 
   // ─── STRAVA INTEGRATION ───
-  const MONTHLY_TARGET_MI = 125; // miles — your monthly goal in miles (~200km)
-  const MONTHLY_TARGET_KM = 200; // km  — your monthly goal in km
+  const MONTHLY_TARGET_MI = 300; // miles — your monthly goal
+  const MONTHLY_TARGET_KM = 483; // km  — equivalent of 300 miles
 
   // Returns current unit based on language toggle
   function getUnit() { return isFrench ? 'km' : 'mi'; }
@@ -2205,7 +2206,7 @@
       if (isFuture) {
         tooltipHtml = `<span style="color:var(--muted);font-size:0.7rem">Upcoming</span>`;
       } else if (isToday && !hasRuns) {
-        tooltipHtml = `<span style="color:var(--muted);font-size:0.7rem">Today</span>`;
+        tooltipHtml = `<span style="color:var(--muted);font-size:0.7rem">Will Emmanuel run today?</span>`;
       } else if (!hasRuns) {
         tooltipHtml = `<span style="color:var(--muted);font-size:0.7rem">Rest day</span>`;
       } else {
