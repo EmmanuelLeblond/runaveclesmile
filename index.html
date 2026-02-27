@@ -612,7 +612,7 @@
 
   .week-stack {
     display: flex;
-    flex-direction: column;
+    flex-direction: column-reverse;
     align-items: stretch;
     width: 100%;
     gap: 1px;
@@ -620,14 +620,13 @@
     bottom: 0;
     left: 0;
     right: 0;
-    transition: all 0.3s;
   }
 
   .week-fill {
     width: 100%;
     background: var(--blue-dim);
-    transition: height 1s ease, background 0.2s;
-    min-height: 0;
+    transition: background 0.2s;
+    min-height: 2px;
   }
 
   .week-fill:first-child { border-radius: 2px 2px 0 0; }
@@ -770,13 +769,166 @@
   .strava-status-text { color: var(--muted); }
   .strava-status-text.live { color: #4caf50; }
 
-  .coros-note {
-    font-size: 0.78rem;
-    color: var(--muted);
-    margin-top: 12px;
-    line-height: 1.5;
-    font-style: italic;
+  /* ─── LATEST ACTIVITY WIDGET ─── */
+  .latest-activity {
+    display: none; /* shown via JS when connected */
+    margin-top: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
   }
+
+  .latest-activity::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, #fc4c02, var(--blue));
+  }
+
+  .activity-map {
+    width: 100%;
+    height: 160px;
+    background: #0d1a22;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .activity-map svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .activity-map-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 60%, var(--card) 100%);
+    pointer-events: none;
+  }
+
+  .activity-map-label {
+    position: absolute;
+    top: 10px; left: 12px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--blue);
+    background: rgba(8,12,16,0.7);
+    padding: 3px 8px;
+    border: 1px solid var(--blue-dim);
+    backdrop-filter: blur(4px);
+  }
+
+  .activity-body {
+    padding: 16px 20px 20px;
+  }
+
+  .activity-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--white);
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .activity-date {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.08em;
+  }
+
+  .activity-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+
+  .activity-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .activity-stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--white);
+    letter-spacing: 0.04em;
+  }
+
+  .activity-stat-value .stat-unit {
+    font-size: 0.65em;
+    color: var(--blue);
+    letter-spacing: 0.08em;
+    margin-left: 2px;
+  }
+
+  .activity-stat-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .activity-effort {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .activity-effort-bar {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .activity-effort-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--blue-dim), var(--blue));
+    transition: width 1s ease;
+  }
+
+  .activity-effort-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .activity-strava-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fc4c02;
+    text-decoration: none;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+
+  .activity-strava-link:hover { opacity: 1; }
 
   /* ─── RACES ─── */
   #races {
@@ -1350,6 +1502,47 @@
         <div class="strava-dot" id="strava-dot"></div>
         <span class="strava-status-text" id="strava-status-text" data-en="Not connected — data shown is a placeholder" data-fr="Non connecté — données affichées à titre indicatif">Not connected — data shown is a placeholder</span>
       </div>
+
+      <!-- Latest activity widget — shown when Strava is connected -->
+      <div class="latest-activity" id="latest-activity">
+        <div class="activity-map" id="activity-map">
+          <div class="activity-map-label">Latest Run</div>
+          <div class="activity-map-overlay"></div>
+        </div>
+        <div class="activity-body">
+          <div class="activity-title" id="activity-title">—</div>
+          <div class="activity-date" id="activity-date">—</div>
+          <div class="activity-stats">
+            <div class="activity-stat">
+              <div class="activity-stat-value" id="act-dist">—<span class="stat-unit" id="act-dist-unit">mi</span></div>
+              <div class="activity-stat-label" data-en="Distance" data-fr="Distance">Distance</div>
+            </div>
+            <div class="activity-stat">
+              <div class="activity-stat-value" id="act-pace">—<span class="stat-unit">/mi</span></div>
+              <div class="activity-stat-label" data-en="Pace" data-fr="Allure">Pace</div>
+            </div>
+            <div class="activity-stat">
+              <div class="activity-stat-value" id="act-time">—<span class="stat-unit">min</span></div>
+              <div class="activity-stat-label" data-en="Time" data-fr="Durée">Time</div>
+            </div>
+            <div class="activity-stat">
+              <div class="activity-stat-value" id="act-hr">—<span class="stat-unit">bpm</span></div>
+              <div class="activity-stat-label" data-en="Avg HR" data-fr="FC Moy">Avg HR</div>
+            </div>
+          </div>
+          <div class="activity-effort" id="activity-effort" style="display:none">
+            <span class="activity-effort-label" id="effort-label">Effort</span>
+            <div class="activity-effort-bar">
+              <div class="activity-effort-fill" id="effort-fill" style="width:0%"></div>
+            </div>
+            <span class="activity-effort-label" id="effort-pct"></span>
+          </div>
+          <a class="activity-strava-link" id="activity-strava-link" href="#" target="_blank" rel="noopener">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+            View on Strava
+          </a>
+        </div>
+      </div>
     </div>
     <div class="reveal reveal-delay-1">
       <!-- Monthly card -->
@@ -1641,13 +1834,183 @@
   }
 
   function setStravaConnected(name) {
-    // Hide the connect button, status line, and description — users don't need to see this
     const btn = document.getElementById('strava-btn');
     if (btn) btn.style.display = 'none';
     const status = document.getElementById('strava-status');
     if (status) status.style.display = 'none';
     const desc = document.querySelector('#mileage .section-sub');
     if (desc) desc.style.display = 'none';
+    // Show latest activity widget
+    const widget = document.getElementById('latest-activity');
+    if (widget) widget.style.display = 'block';
+  }
+
+  function renderLatestActivity(act) {
+    if (!act) return;
+    const unit = getUnit();
+    const isMi = !isFrench;
+
+    // Title & date
+    const titleEl = document.getElementById('activity-title');
+    if (titleEl) titleEl.textContent = act.name || 'Morning Run';
+
+    const dateEl = document.getElementById('activity-date');
+    if (dateEl) {
+      const d = new Date(act.start_date_local);
+      dateEl.textContent = d.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', {
+        weekday: 'long', month: 'long', day: 'numeric'
+      });
+    }
+
+    // Distance
+    const distKm = act.distance / 1000;
+    const distDisp = isMi
+      ? (distKm * 0.621371).toFixed(2)
+      : distKm.toFixed(2);
+    const distEl = document.getElementById('act-dist');
+    const distUnit = document.getElementById('act-dist-unit');
+    if (distEl) distEl.childNodes[0].textContent = distDisp;
+    if (distUnit) distUnit.textContent = unit;
+
+    // Pace (moving_time / distance)
+    const paceEl = document.getElementById('act-pace');
+    const paceLabelEl = paceEl?.querySelector('.stat-unit');
+    if (paceEl && act.moving_time && act.distance) {
+      const secsPerUnit = isMi
+        ? act.moving_time / (act.distance / 1000 * 0.621371)
+        : act.moving_time / (act.distance / 1000);
+      const paceMin = Math.floor(secsPerUnit / 60);
+      const paceSec = String(Math.round(secsPerUnit % 60)).padStart(2, '0');
+      paceEl.childNodes[0].textContent = `${paceMin}:${paceSec}`;
+      if (paceLabelEl) paceLabelEl.textContent = isMi ? '/mi' : '/km';
+    }
+
+    // Time
+    const timeEl = document.getElementById('act-time');
+    if (timeEl && act.moving_time) {
+      const h = Math.floor(act.moving_time / 3600);
+      const m = Math.floor((act.moving_time % 3600) / 60);
+      const s = String(act.moving_time % 60).padStart(2, '0');
+      timeEl.childNodes[0].textContent = h > 0 ? `${h}:${String(m).padStart(2,'0')}` : `${m}:${s}`;
+      const timeUnit = timeEl.querySelector('.stat-unit');
+      if (timeUnit) timeUnit.textContent = h > 0 ? 'h' : 'min';
+    }
+
+    // Heart rate
+    const hrEl = document.getElementById('act-hr');
+    if (hrEl) {
+      if (act.average_heartrate) {
+        hrEl.childNodes[0].textContent = Math.round(act.average_heartrate);
+      } else {
+        hrEl.closest('.activity-stat').style.opacity = '0.3';
+      }
+    }
+
+    // Relative effort bar
+    if (act.suffer_score) {
+      const effortEl = document.getElementById('activity-effort');
+      const fillEl   = document.getElementById('effort-fill');
+      const pctEl    = document.getElementById('effort-pct');
+      const labelEl  = document.getElementById('effort-label');
+      if (effortEl) effortEl.style.display = 'flex';
+      const pct = Math.min(Math.round((act.suffer_score / 400) * 100), 100);
+      if (fillEl) setTimeout(() => { fillEl.style.width = pct + '%'; }, 400);
+      if (pctEl) pctEl.textContent = act.suffer_score + ' pts';
+      if (labelEl) labelEl.textContent = isFrench ? 'Effort' : 'Relative Effort';
+    }
+
+    // Strava link
+    const linkEl = document.getElementById('activity-strava-link');
+    if (linkEl && act.id) {
+      linkEl.href = `https://www.strava.com/activities/${act.id}`;
+    }
+
+    // Map — render polyline as SVG path
+    if (act.map?.summary_polyline) {
+      renderActivityMap(act.map.summary_polyline);
+    }
+  }
+
+  function renderActivityMap(encoded) {
+    // Decode Google encoded polyline
+    const points = [];
+    let idx = 0, lat = 0, lng = 0;
+    while (idx < encoded.length) {
+      let b, shift = 0, result = 0;
+      do { b = encoded.charCodeAt(idx++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+      lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+      shift = result = 0;
+      do { b = encoded.charCodeAt(idx++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+      lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+      points.push([lat / 1e5, lng / 1e5]);
+    }
+    if (points.length < 2) return;
+
+    const lats = points.map(p => p[0]);
+    const lngs = points.map(p => p[1]);
+    const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+    const W = 400, H = 160;
+    const pad = 16;
+
+    const toX = lng => pad + ((lng - minLng) / (maxLng - minLng || 1)) * (W - pad * 2);
+    const toY = lat => H - pad - ((lat - minLat) / (maxLat - minLat || 1)) * (H - pad * 2);
+
+    const d = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${toX(p[1]).toFixed(1)},${toY(p[0]).toFixed(1)}`).join(' ');
+
+    const mapEl = document.getElementById('activity-map');
+    if (!mapEl) return;
+    const existing = mapEl.querySelector('svg');
+    if (existing) existing.remove();
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+    // Background
+    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    bg.setAttribute('width', W); bg.setAttribute('height', H);
+    bg.setAttribute('fill', '#0a1520');
+    svg.appendChild(bg);
+
+    // Glow path
+    const glowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    glowPath.setAttribute('d', d);
+    glowPath.setAttribute('fill', 'none');
+    glowPath.setAttribute('stroke', 'rgba(91,200,245,0.15)');
+    glowPath.setAttribute('stroke-width', '8');
+    glowPath.setAttribute('stroke-linecap', 'round');
+    glowPath.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(glowPath);
+
+    // Main path
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', '#5bc8f5');
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(path);
+
+    // Start dot
+    const startDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    startDot.setAttribute('cx', toX(points[0][1]));
+    startDot.setAttribute('cy', toY(points[0][0]));
+    startDot.setAttribute('r', '4');
+    startDot.setAttribute('fill', '#4caf50');
+    svg.appendChild(startDot);
+
+    // End dot
+    const endPt = points[points.length - 1];
+    const endDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    endDot.setAttribute('cx', toX(endPt[1]));
+    endDot.setAttribute('cy', toY(endPt[0]));
+    endDot.setAttribute('r', '4');
+    endDot.setAttribute('fill', '#fc4c02');
+    svg.appendChild(endDot);
+
+    mapEl.insertBefore(svg, mapEl.firstChild);
   }
 
   // Store raw km values globally so we can re-render on language toggle
@@ -1717,14 +2080,15 @@
         }
       }
 
-      // Stacked bar segments
+      // Stacked bar segments — use px heights based on 60px container
       let stackHtml = '';
       if (hasRuns && !isFuture) {
-        const totalHeight = Math.max((total / maxVal) * 100, 8); // min 8% so tiny runs show
+        const BAR_HEIGHT = 60; // px, matches .week-fill-wrap height
+        const totalPx = Math.max((total / maxVal) * BAR_HEIGHT, 4); // min 4px
         runDisplays.forEach((d, ri) => {
-          const segH = (d / total) * totalHeight;
-          const cls  = `week-fill${isToday ? ' current' : ''}${ri > 0 ? ' run2' : ''}`;
-          stackHtml += `<div class="${cls}" style="height:${segH}%"></div>`;
+          const segPx = Math.max((d / total) * totalPx, 2);
+          const cls   = `week-fill${isToday ? ' current' : ''}${ri > 0 ? ' run2' : ''}`;
+          stackHtml += `<div class="${cls}" style="height:${segPx}px"></div>`;
         });
       }
 
@@ -1746,6 +2110,7 @@
       if (data.totalKm !== undefined) {
         localStorage.setItem('strava_refresh_token', data.refresh_token);
         renderMileage(data.totalKm, data.weeklyDays);
+        if (data.latestActivity) renderLatestActivity(data.latestActivity);
         return true;
       }
     } catch(e) { console.error('Strava fetch error', e); }
