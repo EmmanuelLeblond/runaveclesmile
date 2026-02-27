@@ -15,11 +15,11 @@ export default async function handler(req, res) {
         grant_type: 'authorization_code'
       })
     });
-    const data = await r.json();
-    return res.json(data);
+    return res.json(await r.json());
   }
 
   if (action === 'stats' && refresh_token) {
+    // Refresh token
     const tokenRes = await fetch('https://www.strava.com/oauth/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -32,12 +32,32 @@ export default async function handler(req, res) {
     });
     const { access_token, refresh_token: new_refresh } = await tokenRes.json();
 
-    const start = new Date();
-    start.setDate(1); start.setHours(0, 0, 0, 0);
-    const after = Math.floor(start.getTime() / 1000);
+    // Get Monday of current ISO week
+    function getMonday(date) {
+      const d = new Date(date);
+      const day = d.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      d.setDate(d.getDate() + diff);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
 
-    const [actRes, latestRes] = await Promise.all([
-      fetch(`https://www.strava.com/api/v3/athlete/activities?after=${after}&per_page=100`, {
+    // Fetch from 4 weeks ago Monday so we can build 4 full weeks
+    const thisMonday = getMonday(new Date());
+    const fourWeeksAgo = new Date(thisMonday);
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 21);
+    const after = Math.floor(fourWeeksAgo.getTime() / 1000);
+
+    // Also fetch start of month for monthly total
+    const monthStart = new Date();
+    monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0);
+    const monthAfter = Math.floor(monthStart.getTime() / 1000);
+
+    const [weekActRes, monthActRes, latestRes] = await Promise.all([
+      fetch(`https://www.strava.com/api/v3/athlete/activities?after=${after}&per_page=200`, {
+        headers: { Authorization: `Bearer ${access_token}` }
+      }),
+      fetch(`https://www.strava.com/api/v3/athlete/activities?after=${monthAfter}&per_page=100`, {
         headers: { Authorization: `Bearer ${access_token}` }
       }),
       fetch(`https://www.strava.com/api/v3/athlete/activities?per_page=1`, {
@@ -45,29 +65,41 @@ export default async function handler(req, res) {
       })
     ]);
 
-    const activities     = await actRes.json();
-    const latestArr      = await latestRes.json();
-    const latestActivity = latestArr[0] || null;
-    const runs           = activities.filter(a => a.type === 'Run');
-    const totalKm        = runs.reduce((sum, a) => sum + a.distance / 1000, 0);
+    const weekActivities  = await weekActRes.json();
+    const monthActivities = await monthActRes.json();
+    const latestArr       = await latestRes.json();
+    const latestActivity  = latestArr[0] || null;
 
-    const weeklyDays = [0,1,2,3,4,5,6].map(i => {
-      const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
-      d.setHours(0,0,0,0);
-      const next = new Date(d); next.setDate(next.getDate() + 1);
-      return runs
-        .filter(a => {
-          const t = new Date(a.start_date_local).getTime();
-          return t >= d.getTime() && t < next.getTime();
-        })
-        .map(a => Math.round((a.distance / 1000) * 10) / 10)
-        .sort((a, b) => b - a);
+    const monthRuns = monthActivities.filter(a => a.type === 'Run');
+    const totalKm   = monthRuns.reduce((sum, a) => sum + a.distance / 1000, 0);
+
+    const weekRuns = weekActivities.filter(a => a.type === 'Run');
+
+    // Build 4 weeks newest-first: week[0] = this week, week[1] = last week, etc.
+    const allWeeks = [0, -1, -2, -3].map(weekOffset => {
+      const mon = new Date(thisMonday);
+      mon.setDate(mon.getDate() + weekOffset * 7);
+      // Build Mon-Sun array (7 days)
+      return [0, 1, 2, 3, 4, 5, 6].map(dayIdx => {
+        const dayStart = new Date(mon);
+        dayStart.setDate(dayStart.getDate() + dayIdx);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(dayStart);
+        dayEnd.setDate(dayEnd.getDate() + 1);
+
+        return weekRuns
+          .filter(a => {
+            const t = new Date(a.start_date_local).getTime();
+            return t >= dayStart.getTime() && t < dayEnd.getTime();
+          })
+          .map(a => Math.round((a.distance / 1000) * 10) / 10)
+          .sort((a, b) => b - a);
+      });
     });
 
     return res.json({
       totalKm: Math.round(totalKm * 10) / 10,
-      weeklyDays,
+      weeklyDays: allWeeks,   // new format: array of 4 weeks
       refresh_token: new_refresh,
       latestActivity: latestActivity ? {
         id:                   latestActivity.id,
