@@ -91,9 +91,9 @@ export default async function handler(req, res) {
         .sort((a, b) => b - a);
     });
 
-    // Generate Mapbox URLs securely on the backend
-    let mapUrlDark = null;
-    let mapUrlLight = null;
+    // Requesting a wider 800x250 canvas forces CSS 'cover' to crop the sides, protecting the Y-axis.
+        mapUrlDark = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${overlaysDark}/auto/800x250@2x?padding=35&access_token=${MAPBOX_TOKEN}`;
+        mapUrlLight = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${overlaysLight}/auto/800x250@2x?padding=35&access_token=${MAPBOX_TOKEN}`;
 
     if (latestActivity?.map?.summary_polyline && MAPBOX_TOKEN) {
       const encoded = latestActivity.map.summary_polyline;
