@@ -2047,9 +2047,22 @@
       linkEl.href = `https://www.strava.com/activities/${act.id}`;
     }
 
-    // Map — render polyline as SVG path
-    if (act.map?.summary_polyline) {
-      renderActivityMap(act.map.summary_polyline);
+    // Map — Apply Mapbox URLs as CSS variables, or fallback to SVG
+    const mapEl = document.getElementById('activity-map');
+    if (mapEl) {
+      if (act.mapUrlDark && act.mapUrlLight) {
+        // Feed the URLs into the CSS variables
+        mapEl.style.setProperty('--map-bg-dark', `url('${act.mapUrlDark}')`);
+        mapEl.style.setProperty('--map-bg-light', `url('${act.mapUrlLight}')`);
+        
+        // Clear the SVG and set the base inner HTML
+        mapEl.innerHTML = `
+          <div class="activity-map-label">Latest Run</div>
+          <div class="activity-map-overlay"></div>
+        `;
+      } else if (act.map?.summary_polyline) {
+        renderActivityMap(act.map.summary_polyline);
+      }
     }
   }
 
