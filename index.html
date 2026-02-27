@@ -203,7 +203,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 0 48px;
+    padding: 120px 48px 48px;
     overflow: hidden;
   }
 
@@ -286,7 +286,7 @@
   .hero-content {
     position: relative;
     z-index: 2;
-    max-width: 900px;
+    max-width: 80vw;
     animation: heroIn 1s ease both;
   }
 
@@ -319,9 +319,9 @@
 
   .hero-account {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(4.5rem, 14vw, 10rem);
-    line-height: 0.92;
-    letter-spacing: 0.04em;
+    font-size: clamp(5rem, 18vw, 14rem);
+    line-height: 0.88;
+    letter-spacing: 0.02em;
     color: var(--white);
     animation: heroIn 1s 0.15s ease both;
   }
@@ -731,7 +731,20 @@
   .week-fill.current { background: var(--blue); }
   .week-fill.current.run2 { background: rgba(91,200,245,0.6); }
 
-  .week-bar.future .week-fill-wrap {
+  .week-nav-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 26px; height: 26px;
+    border-radius: 2px;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .week-nav-btn:hover:not(:disabled) { border-color: var(--blue-dim); color: var(--blue); }
+  .week-nav-btn:disabled { opacity: 0.25; cursor: default; }
     background: rgba(255,255,255,0.01);
     border: 1px dashed rgba(255,255,255,0.04);
   }
@@ -881,7 +894,7 @@
   .activity-map {
     width: 100%;
     height: 160px;
-    background: #0d1a22;
+    background: var(--card);
     position: relative;
     overflow: hidden;
   }
@@ -891,10 +904,14 @@
     height: 100%;
   }
 
+  .activity-map svg rect {
+    fill: var(--card) !important; /* SVG bg rect matches card */
+  }
+
   .activity-map-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom, transparent 60%, var(--card) 100%);
+    background: linear-gradient(to bottom, transparent 55%, var(--card) 100%);
     pointer-events: none;
   }
 
@@ -1217,7 +1234,7 @@
     .lang-flag { font-size: 1rem; }
 
     /* HERO */
-    .hero { padding: 0 16px; min-height: 100svh; justify-content: flex-end; padding-bottom: 80px; }
+    .hero { padding: 100px 16px 80px; min-height: 100svh; justify-content: center; }
     .hero-decoration { width: 100%; }
     .hero-decoration img { opacity: 0.35; }
     .hero-eyebrow { margin-bottom: 16px; }
@@ -1658,10 +1675,14 @@
 
       <!-- Weekly breakdown -->
       <div class="mileage-card">
-        <div class="mileage-sub-label" style="margin-bottom:16px;" data-en="This Week — Daily Breakdown" data-fr="Cette Semaine — Détail Journalier">This Week — Daily Breakdown</div>
-        <div class="weekly-grid" id="weekly-grid">
-          <!-- filled by JS -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div class="mileage-sub-label" id="week-label" data-en="This Week — Daily Breakdown" data-fr="Cette Semaine — Détail Journalier">This Week — Daily Breakdown</div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="week-nav-btn" id="week-prev" onclick="shiftWeek(-1)" title="Previous week">‹</button>
+            <button class="week-nav-btn" id="week-next" onclick="shiftWeek(1)" title="Next week" disabled>›</button>
+          </div>
         </div>
+        <div class="weekly-grid" id="weekly-grid"><!-- filled by JS --></div>
       </div>
     </div>
   </div>
@@ -1727,6 +1748,18 @@
         </td>
       </tr>
       <tr class="race-row">
+        <td class="race-date">Apr 18</td>
+        <td>
+          <div class="race-name">Wake Forest Invitational</div>
+          <div class="race-location">Winston-Salem, NC — 5k</div>
+        </td>
+        <td><span class="race-type type-track">Track</span></td>
+        <td class="race-links">
+          <a href="#" class="race-link">📍 Info</a>
+          <a href="#" class="race-link">🔴 Live Results</a>
+        </td>
+      </tr>
+      <tr class="race-row">
         <td class="race-date">May 1–3</td>
         <td>
           <div class="race-name">Centennial Conference Championships</div>
@@ -1747,18 +1780,6 @@
         <td><span class="race-type type-track">Track</span></td>
         <td class="race-links">
           <a href="#" class="race-link highlight">📺 Watch Live</a>
-          <a href="#" class="race-link">🔴 Live Results</a>
-        </td>
-      </tr>
-      <tr class="race-row">
-        <td class="race-date">Apr 18</td>
-        <td>
-          <div class="race-name">Wake Forest Invitational</div>
-          <div class="race-location">Winston-Salem, NC — 5k</div>
-        </td>
-        <td><span class="race-type type-track">Track</span></td>
-        <td class="race-links">
-          <a href="#" class="race-link">📍 Info</a>
           <a href="#" class="race-link">🔴 Live Results</a>
         </td>
       </tr>
@@ -1890,7 +1911,11 @@
 
     // re-render mileage in the new unit if data is loaded
     if (_storedKm !== null && _storedWeeklyKm !== null) {
-      setTimeout(() => renderMileage(_storedKm, _storedWeeklyKm), 150);
+      setTimeout(() => {
+        renderMileage(_storedKm, _storedWeeklyKm);
+        // restore the week offset the user was on
+        if (_currentWeekOffset !== 0) shiftWeek(_currentWeekOffset);
+      }, 150);
     }
   }
 
@@ -2082,10 +2107,10 @@
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
-    // Background
+    // Background — use CSS var so it adapts to light/dark mode
     const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     bg.setAttribute('width', W); bg.setAttribute('height', H);
-    bg.setAttribute('fill', '#0a1520');
+    bg.setAttribute('fill', getComputedStyle(document.documentElement).getPropertyValue('--card').trim() || '#111820');
     svg.appendChild(bg);
 
     // Glow path
@@ -2128,59 +2153,45 @@
     mapEl.insertBefore(svg, mapEl.firstChild);
   }
 
-  // Store raw km values globally so we can re-render on language toggle
+  // ─── WEEK NAVIGATION STATE ───
   let _storedKm = null;
-  let _storedWeeklyKm = null;
+  let _storedWeeklyKm = null;        // array of 4 weeks: newest first, each is [Mon..Sun] array-of-arrays
+  let _currentWeekOffset = 0;        // 0 = this week, -1 = last week, etc.
+  const MAX_PAST_WEEKS = 3;          // how many past weeks to keep (+ current = 4 total)
 
-  function renderMileage(totalKm, weeklyDays) {
-    _storedKm = totalKm;
-    _storedWeeklyKm = weeklyDays;
+  function getMonday(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = (day === 0) ? -6 : 1 - day; // Mon=0 in our system
+    d.setDate(d.getDate() + diff);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
 
-    const target  = getTarget();
-    const unit    = getUnit();
-
-    // weeklyDays is an array of arrays: [[run1km, run2km], [], [run1km], ...]
-    const normalize = d => Array.isArray(d) ? d : (d > 0 ? [d] : []);
-    const days7 = weeklyDays.map(normalize);
-
-    const todayIdx = (new Date().getDay() + 6) % 7; // 0=Mon ... 6=Sun
-
-    // Blank out future days
-    const days7Masked = days7.map((runs, i) => i > todayIdx ? [] : runs);
-
-    // Total display value per day
-    const dayTotalsKm = days7Masked.map(runs => runs.reduce((s, k) => s + k, 0));
-    const displayTotals = dayTotalsKm.map(k => toDisplay(k));
-    const totalDisplay = toDisplay(totalKm);
-    const pct = Math.min(Math.round((totalDisplay / target) * 100), 100);
-
-    // Monthly card
-    const kmEl = document.getElementById('monthly-km');
-    if (kmEl) kmEl.innerHTML = `${totalDisplay} <span id="monthly-unit">${unit}</span>`;
-    const pctEl = document.getElementById('monthly-pct');
-    if (pctEl) pctEl.textContent = pct + '%';
-    setTimeout(() => {
-      const bar = document.getElementById('monthly-bar');
-      if (bar) bar.style.width = pct + '%';
-    }, 200);
-
-    // Weekly bars
+  function renderWeekGrid(weekDays, weekOffset) {
     const grid = document.getElementById('weekly-grid');
     if (!grid) return;
     grid.innerHTML = '';
     const dayLabels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const normalize = d => Array.isArray(d) ? d : (d > 0 ? [d] : []);
+    const unit = getUnit();
 
-    // Max across days that have data (for scaling)
-    const maxVal = Math.max(...displayTotals.filter((_, i) => i <= todayIdx), 0.1);
+    const isCurrentWeek = weekOffset === 0;
+    const todayIdx = isCurrentWeek ? (new Date().getDay() + 6) % 7 : 6; // if past week, all days shown
+
+    const days7 = weekDays.map(normalize);
+    const days7Masked = days7.map((runs, i) => (isCurrentWeek && i > todayIdx) ? [] : runs);
+    const dayTotalsKm = days7Masked.map(runs => runs.reduce((s, k) => s + k, 0));
+    const displayTotals = dayTotalsKm.map(k => toDisplay(k));
+    const maxVal = Math.max(...displayTotals.filter((_, i) => !isCurrentWeek || i <= todayIdx), 0.1);
 
     days7Masked.forEach((runs, i) => {
-      const isToday   = i === todayIdx;
-      const isFuture  = i > todayIdx;
+      const isToday   = isCurrentWeek && i === todayIdx;
+      const isFuture  = isCurrentWeek && i > todayIdx;
       const total     = displayTotals[i];
       const runDisplays = runs.map(k => toDisplay(k));
       const hasRuns   = runDisplays.length > 0 && total > 0;
 
-      // Tooltip
       let tooltipHtml = '';
       if (isFuture) {
         tooltipHtml = `<span style="color:var(--muted);font-size:0.7rem">Upcoming</span>`;
@@ -2195,11 +2206,10 @@
         }
       }
 
-      // Stacked bar segments — use px heights based on 60px container
       let stackHtml = '';
       if (hasRuns && !isFuture) {
-        const BAR_HEIGHT = 60; // px, matches .week-fill-wrap height
-        const totalPx = Math.max((total / maxVal) * BAR_HEIGHT, 4); // min 4px
+        const BAR_HEIGHT = 60;
+        const totalPx = Math.max((total / maxVal) * BAR_HEIGHT, 4);
         runDisplays.forEach((d, ri) => {
           const segPx = Math.max((d / total) * totalPx, 2);
           const cls   = `week-fill${isToday ? ' current' : ''}${ri > 0 ? ' run2' : ''}`;
@@ -2216,6 +2226,65 @@
           <div class="week-day-label${isToday ? ' today' : ''}">${dayLabels[i]}</div>
         </div>`;
     });
+  }
+
+  function shiftWeek(delta) {
+    if (!_storedWeeklyKm) return;
+    const newOffset = _currentWeekOffset + delta;
+    const minOffset = -(MAX_PAST_WEEKS);
+    if (newOffset > 0 || newOffset < minOffset) return;
+    _currentWeekOffset = newOffset;
+
+    // Update nav buttons
+    document.getElementById('week-next').disabled = _currentWeekOffset >= 0;
+    document.getElementById('week-prev').disabled = _currentWeekOffset <= minOffset;
+
+    // Update label
+    const labelEl = document.getElementById('week-label');
+    if (labelEl) {
+      if (_currentWeekOffset === 0) {
+        labelEl.textContent = isFrench ? 'Cette Semaine — Détail Journalier' : 'This Week — Daily Breakdown';
+      } else {
+        const mon = getMonday(new Date());
+        mon.setDate(mon.getDate() + _currentWeekOffset * 7);
+        const sun = new Date(mon); sun.setDate(sun.getDate() + 6);
+        const fmt = d => d.toLocaleDateString(isFrench ? 'fr-FR' : 'en-US', { month: 'short', day: 'numeric' });
+        labelEl.textContent = `${fmt(mon)} – ${fmt(sun)}`;
+      }
+    }
+
+    // weeklyKm stored newest-first: index 0 = this week, 1 = last week, etc.
+    const idx = -_currentWeekOffset;
+    renderWeekGrid(_storedWeeklyKm[idx] || Array(7).fill([]), _currentWeekOffset);
+  }
+
+  function renderMileage(totalKm, allWeeks) {
+    _storedKm = totalKm;
+    // allWeeks is array newest-first: [[thisWeek Mon-Sun], [lastWeek Mon-Sun], ...]
+    // Each day = array of km values per run
+    _storedWeeklyKm = allWeeks;
+    _currentWeekOffset = 0;
+
+    const target  = getTarget();
+    const unit    = getUnit();
+    const totalDisplay = toDisplay(totalKm);
+    const pct = Math.min(Math.round((totalDisplay / target) * 100), 100);
+
+    const kmEl = document.getElementById('monthly-km');
+    if (kmEl) kmEl.innerHTML = `${totalDisplay} <span id="monthly-unit">${unit}</span>`;
+    const pctEl = document.getElementById('monthly-pct');
+    if (pctEl) pctEl.textContent = pct + '%';
+    setTimeout(() => {
+      const bar = document.getElementById('monthly-bar');
+      if (bar) bar.style.width = pct + '%';
+    }, 200);
+
+    // Reset nav buttons
+    document.getElementById('week-next').disabled = true;
+    document.getElementById('week-prev').disabled = allWeeks.length <= 1;
+
+    // Render current week
+    renderWeekGrid(allWeeks[0] || Array(7).fill([]), 0);
   }
 
   async function fetchStravaStats(refresh_token) {
