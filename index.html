@@ -286,7 +286,7 @@
   .hero-content {
     position: relative;
     z-index: 2;
-    max-width: 80vw;
+    width: 100%;
     animation: heroIn 1s ease both;
   }
 
@@ -336,6 +336,7 @@
     text-transform: uppercase;
     color: var(--muted);
     margin-top: 12px;
+    max-width: 520px;
     animation: heroIn 1s 0.25s ease both;
   }
 
@@ -731,20 +732,30 @@
   .week-fill.current { background: var(--blue); }
   .week-fill.current.run2 { background: rgba(91,200,245,0.6); }
 
+  .weekly-nav-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   .week-nav-btn {
     background: none;
     border: 1px solid var(--border);
     color: var(--muted);
-    width: 26px; height: 26px;
+    width: 24px;
+    height: 76px; /* matches bar height + label */
     border-radius: 2px;
-    font-size: 1rem;
+    font-size: 1.1rem;
     line-height: 1;
     cursor: pointer;
     transition: all 0.15s;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
-  .week-nav-btn:hover:not(:disabled) { border-color: var(--blue-dim); color: var(--blue); }
-  .week-nav-btn:disabled { opacity: 0.25; cursor: default; }
+  .week-nav-btn:hover:not(:disabled) { border-color: var(--blue-dim); color: var(--blue); background: var(--blue-glow); }
+  .week-nav-btn:disabled { opacity: 0.18; cursor: default; }
     background: rgba(255,255,255,0.01);
     border: 1px dashed rgba(255,255,255,0.04);
   }
@@ -1675,14 +1686,12 @@
 
       <!-- Weekly breakdown -->
       <div class="mileage-card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-          <div class="mileage-sub-label" id="week-label" data-en="This Week — Daily Breakdown" data-fr="Cette Semaine — Détail Journalier">This Week — Daily Breakdown</div>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <button class="week-nav-btn" id="week-prev" onclick="shiftWeek(-1)" title="Previous week">‹</button>
-            <button class="week-nav-btn" id="week-next" onclick="shiftWeek(1)" title="Next week" disabled>›</button>
-          </div>
+        <div class="mileage-sub-label" id="week-label" data-en="This Week — Daily Breakdown" data-fr="Cette Semaine — Détail Journalier" style="margin-bottom:16px;">This Week — Daily Breakdown</div>
+        <div class="weekly-nav-row">
+          <button class="week-nav-btn" id="week-prev" onclick="shiftWeek(-1)" title="Previous week">‹</button>
+          <div class="weekly-grid" id="weekly-grid"></div>
+          <button class="week-nav-btn" id="week-next" onclick="shiftWeek(1)" title="Next week" disabled>›</button>
         </div>
-        <div class="weekly-grid" id="weekly-grid"><!-- filled by JS --></div>
       </div>
     </div>
   </div>
@@ -2195,6 +2204,8 @@
       let tooltipHtml = '';
       if (isFuture) {
         tooltipHtml = `<span style="color:var(--muted);font-size:0.7rem">Upcoming</span>`;
+      } else if (isToday && !hasRuns) {
+        tooltipHtml = `<span style="color:var(--muted);font-size:0.7rem">Today</span>`;
       } else if (!hasRuns) {
         tooltipHtml = `<span style="color:var(--muted);font-size:0.7rem">Rest day</span>`;
       } else {
@@ -2360,12 +2371,56 @@
   // ─── TOUCH TOOLTIPS for weekly bars (mobile) ───
   document.addEventListener('click', e => {
     const bar = e.target.closest('.week-bar');
-    // Dismiss all first
     document.querySelectorAll('.week-bar.tapped').forEach(b => {
       if (b !== bar) b.classList.remove('tapped');
     });
     if (bar) bar.classList.toggle('tapped');
   });
+
+  // ─── TRACKPAD / TOUCH SWIPE for week navigation ───
+  (function() {
+    let touchStartX = 0;
+    let wheelAccum  = 0;
+    let wheelTimer  = null;
+
+    function tryShift(dir) {
+      // dir: -1 = go to past week (prev), +1 = go to next week
+      const newOffset = _currentWeekOffset + dir;
+      if (newOffset > 0 || newOffset < -MAX_PAST_WEEKS) return;
+      shiftWeek(dir);
+    }
+
+    // Trackpad horizontal scroll on the weekly card area
+    document.addEventListener('wheel', e => {
+      const card = e.target.closest('.mileage-card');
+      if (!card) return;
+      if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) return; // ignore vertical scroll
+      e.preventDefault();
+
+      wheelAccum += e.deltaX;
+      clearTimeout(wheelTimer);
+      wheelTimer = setTimeout(() => {
+        if (Math.abs(wheelAccum) > 40) {
+          tryShift(wheelAccum > 0 ? -1 : 1);
+        }
+        wheelAccum = 0;
+      }, 60);
+    }, { passive: false });
+
+    // Touch swipe
+    document.addEventListener('touchstart', e => {
+      const card = e.target.closest('.mileage-card');
+      if (!card) return;
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+
+    document.addEventListener('touchend', e => {
+      const card = e.target.closest('.mileage-card');
+      if (!card) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 40) tryShift(dx < 0 ? -1 : 1);
+    }, { passive: true });
+  })();
 </script>
 
 <!-- Instagram embed loader -->
