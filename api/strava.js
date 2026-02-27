@@ -3,32 +3,6 @@ export default async function handler(req, res) {
 
   const { action, code, refresh_token } = req.query;
   const CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET;
-  const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN;
-
-  // Helper to decode the polyline to get Start and End coordinates for pins
-  function decodePolyline(encoded) {
-    const points = [];
-    let index = 0, lat = 0, lng = 0;
-    while (index < encoded.length) {
-      let b, shift = 0, result = 0;
-      do {
-        b = encoded.charCodeAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      lat += ((result & 1) ? ~(result >> 1) : (result >> 1));
-      shift = 0; result = 0;
-      do {
-        b = encoded.charCodeAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      lng += ((result & 1) ? ~(result >> 1) : (result >> 1));
-      // Mapbox expects [longitude, latitude]
-      points.push([lng / 1e5, lat / 1e5]);
-    }
-    return points;
-  }
 
   if (action === 'exchange' && code) {
     const r = await fetch('https://www.strava.com/oauth/token', {
@@ -91,5 +65,28 @@ export default async function handler(req, res) {
         .sort((a, b) => b - a);
     });
 
-    // Mapbox URL Generation
-    let mapUrlDark =
+    return res.json({
+      totalKm: Math.round(totalKm * 10) / 10,
+      weeklyDays,
+      refresh_token: new_refresh,
+      latestActivity: latestActivity ? {
+        id:                   latestActivity.id,
+        name:                 latestActivity.name,
+        start_date_local:     latestActivity.start_date_local,
+        distance:             latestActivity.distance,
+        moving_time:          latestActivity.moving_time,
+        elapsed_time:         latestActivity.elapsed_time,
+        average_speed:        latestActivity.average_speed,
+        max_speed:            latestActivity.max_speed,
+        average_heartrate:    latestActivity.average_heartrate,
+        max_heartrate:        latestActivity.max_heartrate,
+        suffer_score:         latestActivity.suffer_score,
+        total_elevation_gain: latestActivity.total_elevation_gain,
+        type:                 latestActivity.type,
+        map: { summary_polyline: latestActivity.map?.summary_polyline || '' }
+      } : null
+    });
+  }
+
+  res.status(400).json({ error: 'Invalid action' });
+}
