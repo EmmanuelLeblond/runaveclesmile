@@ -739,41 +739,7 @@
     min-width: 0;
   }
 
-  .week-total-legend {
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .week-total-legend .week-total-value {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.1rem;
-    letter-spacing: 0.06em;
-    color: var(--blue);
-    line-height: 1;
-  }
-
-  .week-total-legend .week-total-unit {
-    color: var(--blue-dim);
-    font-size: 0.9rem;
-  }
-
-  .week-total-legend .week-total-sep {
-    width: 1px;
-    height: 12px;
-    background: var(--border);
-    flex-shrink: 0;
-  }
-
-  .week-total-legend .week-runs-count {
-    color: var(--muted);
-  }
+  .week-nav-btn {
     background: none;
     border: 1px solid var(--border);
     color: var(--muted);
@@ -1323,13 +1289,15 @@
     .race-table thead { display: none; }
     .race-table th:nth-child(3),
     .race-table td:nth-child(3) { display: none; }
-    .race-row { display: flex; flex-direction: column; padding: 16px 0; gap: 4px; border-bottom: 1px solid var(--border); }
+    .race-table th:nth-child(4),
+    .race-table td:nth-child(4) { display: none; }
+    .race-row { display: flex; flex-direction: column; padding: 16px 0; gap: 6px; border-bottom: 1px solid var(--border); }
     .race-row td { padding: 0 !important; display: block; }
     .race-date { font-size: 0.85rem; min-width: unset; padding-right: 0 !important; }
     .race-name { font-size: 0.95rem; }
     .race-location { font-size: 0.75rem; }
-    .race-links { justify-content: flex-start; margin-top: 6px; flex-wrap: wrap; gap: 6px; }
-    .race-link { font-size: 0.62rem; padding: 5px 10px; }
+    .race-links { justify-content: flex-start; margin-top: 4px; }
+    .race-link { font-size: 0.62rem; padding: 4px 8px; }
 
     /* INSTAGRAM */
     .ig-embed-wrap { max-width: 100%; }
@@ -1725,7 +1693,6 @@
           <div class="weekly-grid" id="weekly-grid"></div>
           <button class="week-nav-btn" id="week-next" onclick="shiftWeek(1)" title="Next week" disabled>›</button>
         </div>
-        <div class="week-total-legend" id="week-total-legend"></div>
       </div>
     </div>
   </div>
@@ -1900,12 +1867,12 @@
   <div class="footer-social">
     <a href="https://www.instagram.com/runaveclesmile/" target="_blank" rel="noopener">Instagram</a>
     <a href="https://www.strava.com/athletes/37131476" target="_blank" rel="noopener">Strava</a>
-    <a href="/cdn-cgi/l/email-protection#4230372c2d2c362a27252d7302252f232b2e6c212d2f7d313720282721367f11322d2c312d30312a2b326770720b2c33372b303b677072670770677a72677b7667707210372c677072033427216770722e27677072112f2b2e27" class="footer-sponsor-btn" data-en="Sponsorship Inquiries" data-fr="Partenariats">Sponsorship Inquiries</a>
+    <a href="mailto:runonthego1@gmail.com?subject=Sponsorship%20Inquiry%20%E2%80%94%20Run%20Avec%20le%20Smile" class="footer-sponsor-btn" data-en="Sponsorship Inquiries" data-fr="Partenariats">Sponsorship Inquiries</a>
   </div>
   <div class="footer-copy">© 2026 Emmanuel Leblond</div>
 </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
   // ─── THEME TOGGLE ───
   function toggleTheme() {
     const isLight = document.body.classList.toggle('light');
@@ -2271,29 +2238,6 @@
           <div class="week-day-label${isToday ? ' today' : ''}">${dayLabels[i]}</div>
         </div>`;
     });
-
-    // ── Weekly total legend ──
-    const legend = document.getElementById('week-total-legend');
-    if (legend) {
-      const loggedDays = days7Masked.filter((_, i) => !isCurrentWeek || i <= todayIdx);
-      const weekTotalKm = loggedDays.reduce((s, runs) => s + runs.reduce((a, k) => a + k, 0), 0);
-      const weekTotalDisplay = toDisplay(weekTotalKm);
-      const runCount = loggedDays.reduce((s, runs) => s + runs.length, 0);
-      const unit = getUnit();
-
-      if (weekTotalDisplay > 0) {
-        const runsLabel = runCount === 1
-          ? (isFrench ? '1 sortie' : '1 run')
-          : (isFrench ? `${runCount} sorties` : `${runCount} runs`);
-        legend.innerHTML = `
-          <span class="week-total-value">${weekTotalDisplay}</span>
-          <span class="week-total-unit">${unit}</span>
-          <span class="week-total-sep"></span>
-          <span class="week-runs-count">${runsLabel} this week</span>`;
-      } else {
-        legend.innerHTML = `<span class="week-runs-count" style="font-style:italic">No runs logged yet this week</span>`;
-      }
-    }
   }
 
   function shiftWeek(delta) {
@@ -2444,4 +2388,13 @@
     document.addEventListener('touchend', e => {
       const card = e.target.closest('.mileage-card');
       if (!card) return;
-      const dx = e.changedTouches[0].clientX - to
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 40) tryShift(dx < 0 ? -1 : 1);
+    }, { passive: true });
+  })();
+</script>
+
+<!-- Instagram embed loader -->
+<script async src="//www.instagram.com/embed.js"></script>
+</body>
+</html>
