@@ -2197,6 +2197,16 @@
     const dayTotalsKm = days7Masked.map(runs => runs.reduce((s, k) => s + k, 0));
     const displayTotals = dayTotalsKm.map(k => toDisplay(k));
     const maxVal = Math.max(...displayTotals.filter((_, i) => !isCurrentWeek || i <= todayIdx), 0.1);
+    // --- ADD THESE LINES TO CALCULATE AND SHOW THE WEEKLY TOTAL ---
+    const weekTotalKm = dayTotalsKm.reduce((sum, val) => sum + val, 0);
+    const weekTotalDisp = toDisplay(weekTotalKm);
+    const weekTotalEl = document.getElementById('week-total');
+    if (weekTotalEl) {
+      weekTotalEl.innerHTML = isFrench 
+        ? `Total de la semaine : <span style="color: var(--blue); margin-left: 4px; font-size: 1.2em;">${weekTotalDisp} ${unit}</span>` 
+        : `Weekly Total : <span style="color: var(--blue); margin-left: 4px; font-size: 1.2em;">${weekTotalDisp} ${unit}</span>`;
+    }
+    // --------------------------------------------------------------
 
     days7Masked.forEach((runs, i) => {
       const isToday   = isCurrentWeek && i === todayIdx;
