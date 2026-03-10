@@ -726,10 +726,12 @@
   .week-fill.current.run2 { background: rgba(91,200,245,0.6); }
 
   .weekly-nav-row {
+    
     display: flex;
     align-items: center;
     gap: 8px;
   }
+  
 
   .weekly-grid {
     display: grid;
@@ -1693,6 +1695,7 @@
           <div class="weekly-grid" id="weekly-grid"></div>
           <button class="week-nav-btn" id="week-next" onclick="shiftWeek(1)" title="Next week" disabled>›</button>
         </div>
+        <div class="mileage-sub-label" id="week-total" style="text-align: center; margin-top: 20px; font-size: 0.85rem;"></div>
       </div>
     </div>
   </div>
